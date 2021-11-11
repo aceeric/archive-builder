@@ -1,0 +1,224 @@
+package org.ericace.threaded;
+
+import org.apache.commons.compress.archivers.ArchiveOutputStream;
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.compress.utils.IOUtils;
+import org.ericace.ArchiveCreator;
+import org.ericace.binary.BinaryService;
+import org.ericace.DocumentReader;
+import org.ericace.Logger;
+
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.sql.Date;
+import java.time.Instant;
+import java.util.concurrent.*;
+import java.util.zip.GZIPOutputStream;
+
+/**
+ * Builds a TAR by concurrently downloading attachments using the passed {@link BinaryService} in parallel via a thread
+ * pool. Otherwise, same as the {@link ArchiveCreator} class.
+ */
+public class ConcurrentArchiveCreator {
+
+    /**
+     * This queue contains {@link Bin} instances, each holding both a document and a binary, and it is guaranteed
+     * to provide items in the same order as the docs provided by the {@link DocumentReader} passed to
+     * the {@link #createArchive} method.
+     */
+    private ReorderingQueue archiveBuilderQueue;
+
+    /**
+     * This queue contains {@link Bin} instances with only a document. The pool of {@link BinaryLoader} instances
+     * will read from this queue, get the binary for the doc, put it in the bin, and write the bin to
+     * the {@link #archiveBuilderQueue}.
+     */
+    private final BlockingQueue<Bin> binaryLoaderQueue;
+
+    /**
+     * Runs n threads started by the class: Some number of threads to populate the {@link #archiveBuilderQueue}
+     * per the {@link #binaryLoaderThreads} field, one thread to populate the {@link #binaryLoaderQueue}, and
+     * one thread to actually consume the <code>archiveBuilderQueue</code> and generate the TAR on the filesystem.
+     */
+    private final ThreadPoolExecutor executor;
+
+    /**
+     * The number of threads to concurrently get binaries
+     */
+    private final int binaryLoaderThreads;
+
+    /**
+     * The number of items to cache in memory in the two queues used by the class: the queue that feeds the
+     * binary loader pool, and the queue that feeds the archive builder
+     */
+    private final int memCacheSize;
+
+    /**
+     * The reader that provides documents and metadata
+     */
+    private final DocumentReader reader;
+
+    /**
+     * The service that provides binary attachments for documents
+     */
+    private final BinaryService binaryService;
+
+    /**
+     * The fully qualified pathname of the archive to generate
+     */
+    private final String tarFQPN;
+
+    /**
+     * Constructor for builder
+     */
+    private ConcurrentArchiveCreator(Builder builder) {
+        this.binaryLoaderThreads = builder.binaryLoaderThreads;
+        this.memCacheSize = builder.memCacheSize;
+        this.reader = builder.reader;
+        this.binaryService = builder.binaryService;
+        this.tarFQPN = builder.tarFQPN;
+
+        archiveBuilderQueue = new ReorderingQueue(memCacheSize);
+        binaryLoaderQueue = new ArrayBlockingQueue<>(memCacheSize);
+        executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(binaryLoaderThreads + 2);
+    }
+
+    /**
+     * Creates an archive with concurrent downloads of document binaries based on class configuration
+     * provided by the builder.
+     *
+     * @return True if success, else false
+     */
+    public boolean createArchive() throws InterruptedException, ExecutionException {
+        Logger.log(ConcurrentArchiveCreator.class, "Creating archive: " + tarFQPN);
+
+        for (int i = 0; i < binaryLoaderThreads; ++i) {
+            executor.submit(new BinaryLoader(binaryLoaderQueue, archiveBuilderQueue, binaryService));
+        }
+
+        // this future lets us know when all documents have been read from the reader and enqueued for
+        // the pool of binary loaders
+        Future<Long> documentCount = executor.submit(new EnqueuingDocumentReader(reader, binaryLoaderQueue));
+
+        // The archive will be created on this thread
+        Future<Boolean> archiveResult = executor.submit(new InternalArchiveCreator(archiveBuilderQueue, tarFQPN));
+
+        // When 'documentCount.get()' returns, all documents have been read from the reader and enqueued for
+        // the binary loader thread pool. Using this value to set the total items on the archive builder
+        // queue allows that class to return EOF when it has provided the corresponding number of documents
+        archiveBuilderQueue.setTotalItems(documentCount.get());
+
+        // When 'archiveResult.get()' returns, the archive is generated
+        boolean result = archiveResult.get();
+
+        Logger.log(ConcurrentArchiveCreator.class, "Shutting down executor service and all associated threads");
+        executor.shutdownNow();
+        Logger.log(ConcurrentArchiveCreator.class, "Done");
+        return result;
+    }
+
+    public static class Builder {
+        private int binaryLoaderThreads;
+        private int memCacheSize;
+        private DocumentReader reader;
+        private BinaryService binaryService;
+        private String tarFQPN;
+
+        public Builder binaryLoaderThreads(int binaryLoaderThreads) {
+            this.binaryLoaderThreads = binaryLoaderThreads;
+            return this;
+        }
+
+        public Builder memCacheSize(int memCacheSize) {
+            this.memCacheSize = memCacheSize;
+            return this;
+        }
+
+        public Builder reader(DocumentReader reader) {
+            this.reader = reader;
+            return this;
+        }
+
+        public Builder binaryService(BinaryService binaryService) {
+            this.binaryService = binaryService;
+            return this;
+        }
+
+        public Builder tarFQPN(String tarFQPN) {
+            this.tarFQPN = tarFQPN;
+            return this;
+        }
+
+        public ConcurrentArchiveCreator build() {
+            return new ConcurrentArchiveCreator(this);
+        }
+    }
+
+    /**
+     * Actually builds the archive, on a thread, getting fed from the instance {@link #queue}
+     */
+    public static class InternalArchiveCreator implements Callable<Boolean> {
+
+        /**
+         * A concurrent queue that provides {@link Bin} instances, each containing a document, and its binary
+         * attachment. The order is guaranteed to be identical to the order presented to the parent class via its
+         * {@link DocumentReader} instance.
+         */
+        private final ReorderingQueue queue;
+
+        /**
+         * The fully-qualified path name of the archive to generate
+         */
+        private final String tarFQPN;
+
+        /**
+         * Constructor
+         *
+         * @param queue   See {@link #queue}
+         * @param tarFQPN ee {@link #tarFQPN}
+         */
+        InternalArchiveCreator(ReorderingQueue queue, String tarFQPN) {
+            this.queue = queue;
+            this.tarFQPN = tarFQPN;
+        }
+
+        /**
+         * Creates the TAR file on the filesystem. Consumes the instance queue, which provides {@link Bin}
+         * instances ordered in the same order presented to the parent class via its {@link DocumentReader} instance.
+         * Also guaranteed is: each item will contain both a document with metadata, and a binary attachment.
+         *
+         * @return True if success, else False
+         */
+        @Override
+        public Boolean call() throws Exception {
+            try (GZIPOutputStream gzos = new GZIPOutputStream(new FileOutputStream(tarFQPN));
+                 ArchiveOutputStream aos = new TarArchiveOutputStream(gzos)) {
+                while (true) {
+                    Logger.log(InternalArchiveCreator.class, "Taking from the queue");
+                    // blocks:
+                    Bin bin = queue.take();
+                    if (bin == null) {
+                        Logger.log(InternalArchiveCreator.class, "No more items - stopping");
+                        break;
+                    }
+                    Logger.log(InternalArchiveCreator.class, "Creating entry for " + bin.doc.getName());
+                    TarArchiveEntry entry = new TarArchiveEntry(bin.doc.getName());
+                    entry.setSize(bin.object.getLength());
+                    entry.setModTime(Date.from(Instant.now()));
+                    aos.putArchiveEntry(entry);
+                    try (InputStream ois = bin.object.getInputStream()) {
+                        IOUtils.copy(ois, aos);
+                    }
+                    aos.closeArchiveEntry();
+                    Logger.log(InternalArchiveCreator.class, "Done creating entry");
+                }
+                aos.finish();
+                Logger.log(InternalArchiveCreator.class, "Done creating archive");
+            } catch (Exception e) {
+                return Boolean.FALSE;
+            }
+            return Boolean.TRUE;
+        }
+    }
+}
