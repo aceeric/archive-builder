@@ -33,7 +33,7 @@ public class FakeBinaryProvider implements BinaryProvider {
      * @return the BinaryObject
      */
     @Override
-    public BinaryObject getBinary(long key) {
+    public BinaryObject getBinary(String key) {
         float lengthActual;
         if (minLength == maxLength) {
             lengthActual = minLength;

@@ -1,5 +1,6 @@
 package org.ericace.binary;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 /**
@@ -19,5 +20,5 @@ public interface BinaryObject {
      *
      * @return the stream
      */
-    public InputStream getInputStream();
+    public InputStream getInputStream() throws IOException;
 }

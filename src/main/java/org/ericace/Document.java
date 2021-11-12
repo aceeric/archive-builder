@@ -48,8 +48,8 @@ public class Document {
      * Gets a key that represents a binary attachment to the document. In this case, the key is just
      * the document ID.
      */
-    public long getKey() {
-        return docID;
+    public String getKey() {
+        return String.valueOf(docID);
     }
 
 //    /**

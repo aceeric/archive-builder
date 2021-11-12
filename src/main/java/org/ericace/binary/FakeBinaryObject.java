@@ -35,9 +35,9 @@ public class FakeBinaryObject implements BinaryObject {
      *               the {@link #getInputStream()} method
      * @param length the length of this binary
      */
-    public FakeBinaryObject(long key, int length) {
+    public FakeBinaryObject(String key, int length) {
         this.length = length;
-        keyBytes = String.valueOf(key).getBytes(StandardCharsets.UTF_8);
+        keyBytes = key.getBytes(StandardCharsets.UTF_8);
     }
 
     @Override

@@ -26,7 +26,7 @@ public class BinaryService {
      *
      * @return the BinaryObject
      */
-    public BinaryObject getBinary(long key) {
+    public BinaryObject getBinary(String key) {
         return provider.getBinary(key);
     }
 }
