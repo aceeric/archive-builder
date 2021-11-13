@@ -4,8 +4,7 @@ import java.io.IOException;
 import java.io.InputStream;
 
 /**
- * Represents a binary document attachment whose store is separate from the document it is attached to. Once
- * it is brought down to the local system from the server, it might be cached on the local filesystem.
+ * Represents a binary document attachment whose store is separate from the document to which it is attached.
  */
 public interface BinaryObject {
     /**
@@ -13,12 +12,12 @@ public interface BinaryObject {
      *
      * @return size in bytes
      */
-    public int getLength();
+    int getLength();
 
     /**
      * Gets an input stream over the binary contents.
      *
      * @return the stream
      */
-    public InputStream getInputStream() throws IOException;
+    InputStream getInputStream() throws IOException;
 }

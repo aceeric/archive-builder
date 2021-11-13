@@ -10,6 +10,9 @@ import java.io.InputStream;
  */
 public class LocalFileBinaryObject implements BinaryObject {
 
+    /**
+     * The physical file this binary wraps
+     */
     private final File file;
 
     /**

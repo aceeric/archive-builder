@@ -1,1 +1,18 @@
-.idea/
+# compiled class file
+*.class
+
+# libraries
+*.so
+
+# log file
+*.log
+
+# package file
+*.jar
+
+# IntelliJ
+.idea
+*.iml
+
+# compiler outputs
+**/target/**

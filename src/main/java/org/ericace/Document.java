@@ -1,8 +1,8 @@
 package org.ericace;
 
 /**
- * Represents a document. All it does is provide a name, and a key representing an attachment. The attachment
- * is assumed to be stored in some other store, separately from the store that houses this document.
+ * Represents a document. This is a simplified abstraction that provides a name, and a key representing an attachment.
+ * The attachment is assumed to be stored in some other store, separately from the store that houses this document.
  */
 public class Document {
 
@@ -15,11 +15,6 @@ public class Document {
      * This document's ID
      */
     private final long docID;
-
-//    /**
-//     * The order in which the reader read the document from the store
-//     */
-//    private DocumentSequence sequence;
 
     /**
      * Constructor - initializes the {@link #docID} member with a unique 1-up number
@@ -51,20 +46,4 @@ public class Document {
     public String getKey() {
         return String.valueOf(docID);
     }
-
-//    /**
-//     * Sets the sequence - or order - in which this document was read from the document store
-//     *
-//     * @param sequence the sequence value
-//     */
-//    public void setSequence(DocumentSequence sequence) {
-//        this.sequence = sequence;
-//    }
-//
-//    /**
-//     * Gets the document sequence assigned by the reader
-//     */
-//    public long getSequence() {
-//        return sequence.getSequence();
-//    }
 }

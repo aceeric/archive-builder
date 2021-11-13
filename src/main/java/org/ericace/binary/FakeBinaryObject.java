@@ -4,7 +4,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
- * A fake Binary that doesn't contain anything, but provides an input stream that returns content.
+ * A fake Binary that doesn't contain anything, but provides an input stream that returns content that
+ * supports testing. The purpose of this class is to enable separation of the measurement of both threading
+ * and concurrency from the specifics of real I/O against a binary store.
  */
 public class FakeBinaryObject implements BinaryObject {
 

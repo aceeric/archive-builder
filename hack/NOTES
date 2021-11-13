@@ -1,0 +1,48 @@
+
+Bin bytes   = 1,847,651,000
+GZ size     = 5,614,398
+compression = 239/1
+
+
+
+threads:   10
+mem cache: 100000
+docs:      50000
+bins:      1K, 10K, 100K
+duration:  00:03:03.168
+bytes/sec: 10,102,818
+
+threads:   30
+mem cache: 100000
+docs:      50000
+bins:      1K, 10K, 100K
+duration:  00:01:00.296
+bytes/sec: 30,643,010
+
+threads:   50
+mem cache: 100000
+docs:      50000
+bins:      1K, 10K, 100K
+duration:  00:00:37.893
+bytes/sec: 48,608,636
+
+threads:   100
+mem cache: 100000
+docs:      50000
+bins:      1K, 10K, 100K
+duration:  00:00:39.034
+bytes/sec: 47,255,776
+
+threads:   200
+mem cache: 100000
+docs:      50000
+bins:      1K, 10K, 100K
+duration:  00:00:39.441
+bytes/sec: 47,128,220
+
+threads:   500
+mem cache: 100000
+docs:      50000
+bins:      1K, 10K, 100K
+duration:  00:00:43.784
+bytes/sec: 42,227,596

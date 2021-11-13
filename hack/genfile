@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+#
+# Generates a test file for S3 download testing. Each file is filled with repetitive text "n bytes b bytes..."
+# where 'n' is the size specified on the command line.
+#
+# Usage
+#
+# ./genfile [filename] [bytes]
+#
+# E.g.:
+#
+# ./genfile 100000-bytes 100000
+#
+# Results in file named '100000-bytes' filled with content "100000 bytes 100000 bytes 100000 bytes..."
+#
+
+filename=$1
+size=$2
+content=$(printf "%s bytes" $2)
+content_len=${#content}
+
+written=0
+
+while [[ $written -lt $size ]]; do
+  echo -n "$content" >> "$filename"
+  if [[ $written -eq 0 ]]; then
+    content=" $content"
+  fi
+  written=$((written + content_len))
+done
+
+truncate -s $size "$filename"

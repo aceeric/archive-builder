@@ -1,14 +1,13 @@
 package org.ericace.threaded;
 
-import org.ericace.binary.BinaryService;
 import org.ericace.Logger;
 import org.ericace.binary.BinaryObject;
+import org.ericace.binary.BinaryService;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 
  * Gets binaries for documents. Reads from an incoming queue containing documents but no attachments. Gets
  * a binary attachment for a document, and places the document + attachment pair on an outgoing queue.
  */
@@ -28,7 +27,7 @@ public class BinaryLoader implements Runnable {
     private final ReorderingQueue outgoingQueue;
 
     /**
-     * The service that actually goes and gets a binary
+     * A service that actually gets a binary
      */
     private final BinaryService binaryService;
 

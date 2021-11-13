@@ -15,13 +15,14 @@ import java.time.Instant;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * Builds a TAR archive using a {@link DocumentReader} instance that provide documents, and a {@link BinaryService}
- * that provides each document's attachment. (Each doc is assumed to have only one attachment.) The idea is: documents
- * are stored in - and provided by - one store, and the attachments are stored in - and provided by - a different
- * store. For example, the documents might be stored in ElasticSearch with relatively low read latency, and
- * the attachments might be stored in an S3-compatible service with higher latency. To include the attachments
- * in the archive, it might be necessary to first download them to a file on the local filesystem. Anyway, the
- * <code>DocumentReader</code> and <code>BinaryService</code> classes encapsulate those storage details.
+ * In a single thread, builds a TAR archive using a {@link DocumentReader} instance that provide documents,
+ * and a {@link BinaryService} that provides each document's attachment. (Each doc is assumed to have only
+ * one attachment.) The idea is: documents are stored in - and provided by - one store, and the attachments
+ * are stored in - and provided by - a different store. For example, the documents might be stored in
+ * ElasticSearch with relatively low read latency, and the attachments might be stored in an S3-compatible
+ * service with higher latency. To include the attachments in the archive, it might be necessary to first
+ * download them to a file on the local filesystem. The <code>DocumentReader</code> and <code>BinaryService</code>
+ * classes encapsulate those storage details.
  */
 public class ArchiveCreator {
 

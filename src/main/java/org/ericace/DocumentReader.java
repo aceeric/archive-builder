@@ -4,7 +4,8 @@ import java.util.Iterator;
 
 /**
  * Provides a reader that returns {@link Document} instances to the caller. This is fake reader that
- * simply manufactures documents with 1-up IDs.
+ * simply manufactures documents with 1-up IDs. This class simulates a document reader that reads some external
+ * store (e.g. ElasticSearch) and presents the ElasticSearch results wrapped in a <i>Document</i> abstraction.
  */
 public class DocumentReader implements Iterable<Document> {
 
@@ -32,8 +33,8 @@ public class DocumentReader implements Iterable<Document> {
      */
     private static class DocumentIterator implements Iterator<Document> {
 
-        private int curDoc = 0;
         private final int numDocs;
+        private int curDoc = 0;
 
         DocumentIterator(int numDocs) {
             this.numDocs = numDocs;

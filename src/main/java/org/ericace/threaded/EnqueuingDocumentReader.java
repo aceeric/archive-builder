@@ -14,7 +14,7 @@ import java.util.concurrent.Callable;
 public class EnqueuingDocumentReader implements Callable<Long> {
 
     /**
-     * Provides documents
+     * Provides documents from some external store
      */
     private final DocumentReader reader;
 
