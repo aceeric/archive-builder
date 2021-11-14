@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 #
-# Generates a test file for S3 download testing. Each file is filled with repetitive text "n bytes b bytes..."
-# where 'n' is the size specified on the command line.
+# This script supports testing by generating a file for uploading into an S3 bucket that can subsequently be
+# downloaded by the app to test concurrency performance characteristics. The script generates a specified size
+# file filled with repetitive text "n bytes n bytes..." where 'n' is the size specified on the command line.
 #
 # Usage
 #
@@ -11,7 +12,8 @@
 #
 # ./genfile 100000-bytes 100000
 #
-# Results in file named '100000-bytes' filled with content "100000 bytes 100000 bytes 100000 bytes..."
+# Results in a file named '100000-bytes' filled with content "100000 bytes 100000 bytes 100000 bytes..." having
+# size is exactly 100,000 bytes.
 #
 
 filename=$1

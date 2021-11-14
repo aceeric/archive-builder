@@ -4,6 +4,8 @@ import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.ericace.binary.BinaryObject;
 import org.ericace.binary.BinaryService;
 
@@ -26,6 +28,8 @@ import java.util.zip.GZIPOutputStream;
  */
 public class ArchiveCreator {
 
+    private static final Logger logger = LogManager.getLogger(ArchiveCreator.class);
+
     /**
      * Creates a TAR in a single thread. The total amount of time will be throttled by the time required to
      * sequentially get each binary attachment.
@@ -37,7 +41,7 @@ public class ArchiveCreator {
      * @param tarFQPN The fully-qualified path of the archive to create/replace
      */
     static void createArchive(DocumentReader reader, BinaryService svc, String tarFQPN) throws IOException {
-        Logger.log(ArchiveCreator.class, "Creating archive: " + tarFQPN);
+        logger.info("Creating archive: {}", tarFQPN);
         try (GZIPOutputStream gzos = new GZIPOutputStream(new FileOutputStream(tarFQPN));
              ArchiveOutputStream aos = new TarArchiveOutputStream(gzos)) {
             for (Document doc : reader) {
@@ -50,10 +54,10 @@ public class ArchiveCreator {
                     IOUtils.copy(ois, aos);
                 }
                 aos.closeArchiveEntry();
-                Logger.log(ArchiveCreator.class, "Created entry for " + doc.getName());
+                logger.info("Created entry for {}", doc.getName());
             }
             aos.finish();
-            Logger.log(ArchiveCreator.class, "Done creating archive");
+            logger.info("Done creating archive");
         }
     }
 }

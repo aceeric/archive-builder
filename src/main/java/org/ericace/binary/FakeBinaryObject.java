@@ -1,14 +1,19 @@
 package org.ericace.binary;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 /**
  * A fake Binary that doesn't contain anything, but provides an input stream that returns content that
- * supports testing. The purpose of this class is to enable separation of the measurement of both threading
- * and concurrency from the specifics of real I/O against a binary store.
+ * supports testing. The purpose of this class is to enable separation of measurement of threading and
+ * concurrency from the specifics of real I/O against a binary store.
  */
 public class FakeBinaryObject implements BinaryObject {
+
+    private static final Logger logger = LogManager.getLogger(FakeBinaryObject.class);
 
     /**
      * The length of the binary

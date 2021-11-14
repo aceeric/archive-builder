@@ -1,6 +1,7 @@
 package org.ericace.threaded;
 
-import org.ericace.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.ericace.binary.BinaryObject;
 import org.ericace.binary.BinaryService;
 
@@ -12,6 +13,8 @@ import java.util.concurrent.TimeUnit;
  * a binary attachment for a document, and places the document + attachment pair on an outgoing queue.
  */
 public class BinaryLoader implements Runnable {
+
+    private static final Logger logger = LogManager.getLogger(BinaryLoader.class);
 
     /**
      * Provides {@link Bin} instances holding {@link org.ericace.Document} instances but no
@@ -58,20 +61,23 @@ public class BinaryLoader implements Runnable {
      */
     @Override
     public void run() {
+        logger.info("Started");
+        Bin bin;
         while (running) {
-            Bin bin;
             try {
                 if ((bin = incomingQueue.poll(100, TimeUnit.MILLISECONDS)) == null) {
+                    logger.info("Poll returned null - size = {}", incomingQueue.size());
                     Thread.sleep(100);
                 } else {
                     bin.object = binaryService.getBinary(bin.doc.getKey());
                     while (!outgoingQueue.add(bin)) {
-                        Logger.log(BinaryLoader.class, "Did not add: " + bin.doc.getName() + " - sleeping", true);
+                        logger.info("Did not add: {} - sleeping", bin.doc.getName());
                         Thread.sleep(100);
                     }
-                    Logger.log(BinaryLoader.class, "Added bin with binary to result queue: " + bin.doc.getName(), true);
+                    logger.info("Added bin with binary to result queue: {}",  bin.doc.getName());
                 }
             } catch (InterruptedException e) {
+                logger.info("Interrupted - stopping");
                 running = false;
             }
         }

@@ -1,19 +1,46 @@
 package org.ericace.threaded;
 
-import org.ericace.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Accepts {@link Bin} instances <b>out of order</b> from multiple concurrent producers, and provides the instances
- * <b>in order</b> to a consumer (or consumers.)
+ * Accepts {@link Bin} instances <b>out of order</b> from multiple concurrent producers via the {@link #add(Bin)}
+ * method, and provides the instances <b>in order</b> to a consumer (or consumers.) via the {@link #take()}
+ * method.
  */
 public class ReorderingQueue {
+
+    private static final Logger logger = LogManager.getLogger(ReorderingQueue.class);
+
+    /**
+     * <code>Bin</code> instances are cached here
+     */
     private final ConcurrentHashMap<Long, Bin> map;
+
+    /**
+     * Enables the class <code>take</code> ordering behavior. This value represents the next sequence value of the
+     * <code>Bin</code> instance from the internal cache that will be returned via the <code>take</code> method.
+     */
     final private AtomicLong nextSequence = new AtomicLong(1);
+
+    /**
+     * Total items to return to consumers. If -1 (set by class initializer) then we don't yet know how many items
+     * to return so the <code>take</code> method can never return EOF. Once set, however, the <code>take</code> method
+     * can use it to determine whether all items have been taken by consumers, and can thus retrurn EOF.
+     */
     final private AtomicLong totalItems = new AtomicLong(-1);
+
+    /**
+     * Running count of items provided from the internal cache to consumers.
+     */
     final private AtomicLong itemsReturned = new AtomicLong(0);
+
+    /**
+     * Internal cache size
+     */
     final private int capacity;
 
     /**
@@ -36,13 +63,14 @@ public class ReorderingQueue {
      * @param totalItems The total items that should be returned
      */
     public void setTotalItems(long totalItems) {
+        logger.info("Setting total items: {}", totalItems);
         this.totalItems.set(totalItems);
     }
 
     /**
      * Gets a <code>Bin</code> instance <b>in order</b> from the internal cache and returns it to the caller, or
-     * blocks if none are available. Order is determined by the <code>sequence</code> field of the <code>Bin</code>
-     * class.
+     * blocks if no instances are available in order. Order is determined by the <code>sequence</code> field of
+     * the <code>Bin</code> class.
      *
      * @return the next <code>Bin instance</code>
      * @throws InterruptedException per <code>Thread.sleep</code>
@@ -62,15 +90,14 @@ public class ReorderingQueue {
             nextSeq = nextSequence.incrementAndGet();
             returned = itemsReturned.incrementAndGet();
         }
-        String msg = String.format("Took bin for doc %s; next sequence=%d; items returned=%d; total items=%d",
-                bin.doc.getName(), nextSeq, returned, totalItems.get());
-        Logger.log(ReorderingQueue.class, msg);
+        logger.info("Took bin for doc {}; next sequence={}; items returned={}; total items={}", bin.doc.getName(),
+                nextSeq, returned, totalItems.get());
         return bin;
     }
 
     /**
-     * Adds a <code>Bin</code> instance to the internal cache. Entries can be added out of order. However,
-     * once the internal cache is full, no more out-of-order entries are accepted.
+     * Adds a <code>Bin</code> instance to the internal cache. Entries can be added out of order. Once
+     * the internal cache is full, no more entries are accepted.
      *
      * @param bin The instance to add
      * @return True if added, else false
@@ -78,22 +105,21 @@ public class ReorderingQueue {
     public boolean add(Bin bin) {
         if (canAdd(bin)) {
             map.put(bin.sequence, bin);
-            String msg = String.format("Added bin to queue: %s, queue size=%d", bin.doc.getName(), map.size());
-            Logger.log(ReorderingQueue.class, msg);
+            logger.info("Added bin to queue: {}, queue size={}", bin.doc.getName(), map.size());
             return true;
         } else {
-            String msg = String.format("Can't add %s - bin sequence=%d, last sequence=%d, map size=%d",
-                    bin.doc.getName(), bin.sequence, nextSequence.get(), map.size());
-            Logger.log(ReorderingQueue.class, msg);
+            logger.info("Can't add {} - bin sequence={}, last sequence={}, map size={}", bin.doc.getName(),
+                    bin.sequence, nextSequence.get(), map.size());
             return false;
         }
     }
 
     /**
-     * Determines if a <code>Bin</code> instance can be added to the internal cache. The logic here is: if the
+     * Determines if a <code>Bin</code> instance can be added to the internal cache. The logic is: if the
      * item being added is the next sequence that the class would return, accept it. Otherwise, accept anything
      * as long is the cache represented by the instance {@link #map} has capacity. Regarding that capacity,
-     * always leave one space for that next sequential object in the order needed to preserve original order.
+     * always leave one space for that next sequential object in the order needed to preserve original order,
+     * so the internal cache can't ever become full and prevent the next required ordered item to be added.
      *
      * @param bin the instance that the caller wants to add
      * @return true if it can be added per rules as described

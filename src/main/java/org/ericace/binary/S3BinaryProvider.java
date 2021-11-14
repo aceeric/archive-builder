@@ -6,7 +6,8 @@ import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
 import com.amazonaws.services.s3.model.S3Object;
 import com.amazonaws.services.s3.model.S3ObjectInputStream;
-import org.ericace.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -18,16 +19,17 @@ import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * The S3 Binary Provider class gets binaries from an S3 bucket. Since this project is basically a load and performance
- * tester, the class is used as follows:
+ * tester, the class is used as follows in the project:
  * <ol>
  *     <li>Caller initializes the class with a list of keys that are in a bucket</li>
  *     <li>When the {@link #getBinary} method is called, the method ignores the <code>key</code> param and randomly
  *         selects a key from the instance list. So if you want to test with a uniform file size, initialize the list
- *         with one key. An alternate test is to initialize the list with keys representing S3 objects of
- *         varying size.</li>
+ *         with one key. Otherwise initialize the list with keys representing S3 objects of varying size.</li>
  * </ol>
  */
 public class S3BinaryProvider implements BinaryProvider {
+
+    private static final Logger logger = LogManager.getLogger(S3BinaryProvider.class);
 
     /**
      * How we talk to AWS
@@ -46,12 +48,12 @@ public class S3BinaryProvider implements BinaryProvider {
     private final ArrayList<String> keys;
 
     /**
-     * a temp dir to download objects from S3 into
+     * A temp dir to download objects from S3 into
      */
     private final String tmpDir;
 
     /**
-     * Constructor. Creats the instance from params.
+     * Constructor. Creates the instance from params.
      *
      * @param bucketName The bucket name
      * @param regionStr  The region - has to match the bucket
@@ -82,7 +84,7 @@ public class S3BinaryProvider implements BinaryProvider {
         File binFile;
         try {
             int randomKey = keys.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, keys.size());
-            Logger.log(S3BinaryProvider.class, "Getting object for key " + key, true);
+            logger.info("Getting object for key {}", key);
             S3Object o = s3.getObject(bucketName, keys.get(randomKey));
             binFile = File.createTempFile("aws", ".bin", new File(tmpDir));
             try (S3ObjectInputStream s3is = o.getObjectContent(); FileOutputStream fos = new FileOutputStream(binFile)) {
@@ -93,7 +95,7 @@ public class S3BinaryProvider implements BinaryProvider {
                 }
             }
         } catch (AmazonServiceException | IOException e) {
-            Logger.log(S3BinaryProvider.class, "ERROR: could not get binary. Thread is terminating.", true);
+            logger.error("Could not get binary. Thread is terminating.");
             throw new RuntimeException("Could not get binary: " + key);
         }
         return new LocalFileBinaryObject(binFile);

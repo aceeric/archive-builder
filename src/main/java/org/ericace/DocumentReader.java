@@ -1,5 +1,8 @@
 package org.ericace;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.Iterator;
 
 /**
@@ -8,6 +11,8 @@ import java.util.Iterator;
  * store (e.g. ElasticSearch) and presents the ElasticSearch results wrapped in a <i>Document</i> abstraction.
  */
 public class DocumentReader implements Iterable<Document> {
+
+    private static final Logger logger = LogManager.getLogger(DocumentReader.class);
 
     /**
      * The number of docs this reader will return
@@ -29,7 +34,8 @@ public class DocumentReader implements Iterable<Document> {
     }
 
     /**
-     * The iterator returned by the {@link #iterator()} method
+     * The iterator returned by the {@link #iterator()} method. The iterator just manufactures documents
+     * with a 1-up unique ID. See {@link #next()}.
      */
     private static class DocumentIterator implements Iterator<Document> {
 
@@ -46,8 +52,8 @@ public class DocumentReader implements Iterable<Document> {
         }
 
         /**
-         * Creates a new document on each call. Each document creates its own unique ID. This will
-         * also assign the sequence starting with one and monotonically increasing for each document.
+         * Creates a new document on each call. Each document creates its own unique ID starting with '1' and
+         * monotonically increasing for each subsequent document.
          */
         @Override
         public Document next() {

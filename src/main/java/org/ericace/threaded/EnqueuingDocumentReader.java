@@ -1,17 +1,19 @@
 package org.ericace.threaded;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.ericace.Document;
 import org.ericace.DocumentReader;
-import org.ericace.Logger;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 
 /**
- * Reads {@link Document} instances from a {@link DocumentReader} and enqueues them for another thread to
- * get each document's binary attachment.
+ * Reads {@link Document} instances from a {@link DocumentReader} and enqueues them in a queue.
  */
 public class EnqueuingDocumentReader implements Callable<Long> {
+
+    private static final Logger logger = LogManager.getLogger(EnqueuingDocumentReader.class);
 
     /**
      * Provides documents from some external store
@@ -20,7 +22,8 @@ public class EnqueuingDocumentReader implements Callable<Long> {
 
     /**
      * Contains sequenced <code>Bin</code> instances that another thread can obtain binaries for. The class
-     * enqueues onto this queue from the {@link #reader}
+     * enqueues onto this queue from the {@link #reader}. Entries enqueued here have only <code>Document</code>
+     * instances - not <code>BinaryObject</code> instances.
      */
     private final BlockingQueue<Bin> binQueue;
 
@@ -54,18 +57,17 @@ public class EnqueuingDocumentReader implements Callable<Long> {
             ++documentCount;
             Bin bin = new Bin(doc, documentCount);
             while (!binQueue.offer(bin)) {
-                Logger.log(EnqueuingDocumentReader.class, "Document queue full at: " + doc.getName());
+                logger.info("Document queue full at: {}", doc.getName());
                 try {
                     Thread.sleep(100);
                 } catch (InterruptedException e) {
-                    Logger.log(EnqueuingDocumentReader.class, String.format("Interrupted: read %d documents from reader",
-                            documentCount));
+                    logger.info("Interrupted: read {} documents from reader", documentCount);
                     return documentCount;
                 }
             }
-            Logger.log(EnqueuingDocumentReader.class, "Added doc to doc queue: " + doc.getName());
+            logger.info("Added doc to doc queue: {}", doc.getName());
         }
-        Logger.log(EnqueuingDocumentReader.class, String.format("Done: read %d documents from reader", documentCount));
+        logger.info("Done: read {} documents from reader", documentCount);
         return documentCount;
     }
 }

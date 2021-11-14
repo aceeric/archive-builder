@@ -1,5 +1,8 @@
 package org.ericace.binary;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -9,6 +12,8 @@ import java.io.InputStream;
  * A binary object over a local file.
  */
 public class LocalFileBinaryObject implements BinaryObject {
+
+    private static final Logger logger = LogManager.getLogger(LocalFileBinaryObject.class);
 
     /**
      * The physical file this binary wraps

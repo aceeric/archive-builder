@@ -1,5 +1,7 @@
 package org.ericace;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.ericace.binary.BinaryService;
 import org.ericace.binary.FakeBinaryProvider;
 import org.ericace.binary.S3BinaryProvider;
@@ -10,11 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
+
 /**
  * Entry point
- * TODO LOOK AT https://stackoverflow.com/questions/54394042/java-how-to-avoid-using-thread-sleep-in-a-loop?noredirect=1&lq=1
  */
 public class Main {
+
+    private static final Logger logger = LogManager.getLogger(Main.class);
 
     private static final String TAR_FQPN = "/tmp/foo.tar.gz";
 
@@ -22,16 +26,13 @@ public class Main {
      * Main method
      */
     public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
-        //Logger.classFilter(ArchiveCreator.class, ConcurrentArchiveCreator.InternalArchiveCreator.class);
-        Logger.classFilter(S3BinaryProvider.class);
-        //Logger.messageFilter("ook bin");
         //testSingleThreaded();
         //testMultiThreadedFake();
         testMultiThreadedS3();
     }
 
     private static void testSingleThreaded() throws IOException {
-        Logger.log(Main.class, "Single Threaded");
+        logger.info("Single Threaded");
         Metrics metrics = new Metrics();
         metrics.start();
         ArchiveCreator.createArchive(new DocumentReader(30), new BinaryService(
@@ -52,31 +53,33 @@ public class Main {
     //  2000    150k  100k      00:00:38.131
     //  4000    150k  100k      00:00:20.026  153,601,024
     private static void testMultiThreadedFake() throws InterruptedException, ExecutionException {
-        Logger.log(Main.class, "Multi Threaded");
+        logger.info("Multi threaded start");
         Metrics metrics = new Metrics();
         ConcurrentArchiveCreator creator = new ConcurrentArchiveCreator.Builder()
-                .binaryLoaderThreads(4_000)
-                .memCacheSize(200_000)
-                .reader(new DocumentReader(5_000))
-                .binaryService(new BinaryService(new FakeBinaryProvider(100_000, 2_800_000)))
+                .binaryLoaderThreads(1000)
+                .memCacheSize(100_000)
+                .reader(new DocumentReader(200_000))
+                .binaryService(new BinaryService(new FakeBinaryProvider(1_000)))
                 .tarFQPN(TAR_FQPN)
+                .metrics(metrics)
                 .build();
         metrics.start();
         creator.createArchive();
         metrics.finishAndPrint();
+        logger.info("Multi threaded finish");
     }
 
     private static void testMultiThreadedS3() throws InterruptedException, ExecutionException {
-        Logger.log(Main.class, "Multi Threaded S3");
+        logger.info("Multi threaded S3 start");
         ArrayList<String> keys = new ArrayList<>(List.of("1000-bytes", "10000-bytes", "100000-bytes"));
         String bucket = System.getProperty("bucket");
         String region = System.getProperty("region");
 
         Metrics metrics = new Metrics();
         ConcurrentArchiveCreator creator = new ConcurrentArchiveCreator.Builder()
-                .binaryLoaderThreads(1)
-                .memCacheSize(100000)
-                .reader(new DocumentReader(5000))
+                .binaryLoaderThreads(100)
+                .memCacheSize(200_000)
+                .reader(new DocumentReader(100_000))
                 .binaryService(new BinaryService(new S3BinaryProvider(bucket, region, "/tmp/binaries", keys)))
                 .tarFQPN(TAR_FQPN)
                 .metrics(metrics)
@@ -84,5 +87,6 @@ public class Main {
         metrics.start();
         creator.createArchive();
         metrics.finishAndPrint();
+        logger.info("Multi threaded S3 finish");
     }
 }

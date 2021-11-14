@@ -1,5 +1,8 @@
 package org.ericace;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.time.Duration;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -12,6 +15,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class Metrics {
 
+    private static final Logger logger = LogManager.getLogger(Metrics.class);
+
     private static final DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss.SSS")
             .withLocale(Locale.ENGLISH)
             .withZone(ZoneId.systemDefault());
@@ -21,11 +26,10 @@ public class Metrics {
     private Duration elapsed;
     private long binaryBytesWritten;
 
-    public Metrics() {
-    }
+    public Metrics() {}
 
     /**
-     * Maintains a running tally of {@link org.ericace.binary.BinaryObject} bytes written
+     * Maintains a running tally of {@link org.ericace.binary.BinaryObject} bytes written to the TAR
      *
      * @param binaryBytesWritten for one Binary
      */
@@ -48,15 +52,15 @@ public class Metrics {
     }
 
     public void print() {
-        StringBuilder metrics = new StringBuilder(String.format(" Start: %s\n", fmt.format(start)));
-        metrics.append(String.format(" Finish: %s\n", fmt.format(finish)));
-        metrics.append(String.format(" Elapsed (HH:MM:SS:millis): %s\n", formatElapsed(elapsed)));
-        metrics.append(String.format(" Binary bytes written: %,d\n", binaryBytesWritten));
+        StringBuilder metrics = new StringBuilder(String.format("\nStart: %s\n", fmt.format(start)));
+        metrics.append(String.format("Finish: %s\n", fmt.format(finish)));
+        metrics.append(String.format("Elapsed (HH:MM:SS:millis): %s\n", formatElapsed(elapsed)));
+        metrics.append(String.format("Binary bytes written: %,d\n", binaryBytesWritten));
 
         float bpsec = ((float) binaryBytesWritten / (float) elapsed.toMillis()) * 1000F;
-        metrics.append(String.format(" Binary bytes/sec: %,f\n", bpsec));
+        metrics.append(String.format("Binary bytes/sec: %,f\n", bpsec));
 
-        System.out.println(metrics);
+        logger.info(metrics);
     }
 
     private String formatElapsed(Duration elapsed) {

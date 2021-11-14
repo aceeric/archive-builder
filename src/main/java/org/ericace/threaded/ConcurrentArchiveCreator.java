@@ -4,9 +4,10 @@ import org.apache.commons.compress.archivers.ArchiveOutputStream;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.utils.IOUtils;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.ericace.ArchiveCreator;
 import org.ericace.DocumentReader;
-import org.ericace.Logger;
 import org.ericace.Metrics;
 import org.ericace.binary.BinaryService;
 
@@ -22,6 +23,8 @@ import java.util.zip.GZIPOutputStream;
  * pool. Otherwise, same as the {@link ArchiveCreator} class.
  */
 public class ConcurrentArchiveCreator {
+
+    private static final Logger logger = LogManager.getLogger(ConcurrentArchiveCreator.class);
 
     /**
      * This queue contains {@link Bin} instances, each holding both a document and a binary, and it is guaranteed
@@ -70,6 +73,9 @@ public class ConcurrentArchiveCreator {
      */
     private final String tarFQPN;
 
+    /**
+     * Metrics accumulation
+     */
     private final Metrics metrics;
 
     /**
@@ -85,6 +91,9 @@ public class ConcurrentArchiveCreator {
 
         archiveBuilderQueue = new ReorderingQueue(memCacheSize);
         binaryLoaderQueue = new ArrayBlockingQueue<>(memCacheSize);
+
+        // +2 because this pool is used for the binary downloaders as well as the document reader thread
+        // and the archive creator thread
         executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(binaryLoaderThreads + 2);
     }
 
@@ -95,9 +104,10 @@ public class ConcurrentArchiveCreator {
      * @return True if success, else false
      */
     public boolean createArchive() throws InterruptedException, ExecutionException {
-        Logger.log(ConcurrentArchiveCreator.class, "Creating archive: " + tarFQPN);
+        logger.info("Creating archive: {}", tarFQPN);
 
         for (int i = 0; i < binaryLoaderThreads; ++i) {
+            // populate a pool to download binaries from S3
             executor.submit(new BinaryLoader(binaryLoaderQueue, archiveBuilderQueue, binaryService));
         }
 
@@ -116,9 +126,9 @@ public class ConcurrentArchiveCreator {
         // When 'archiveResult.get()' returns, the archive is generated
         boolean result = archiveResult.get();
 
-        Logger.log(ConcurrentArchiveCreator.class, "Shutting down executor service and all associated threads");
+        logger.info("Shutting down executor service and all associated threads");
         executor.shutdownNow();
-        Logger.log(ConcurrentArchiveCreator.class, "Done");
+        logger.info("Done");
         return result;
     }
 
@@ -170,7 +180,7 @@ public class ConcurrentArchiveCreator {
 
     /**
      * Actually builds the archive on a thread, consuming the instance {@link #queue} which provides {@link Bin}
-     * instances, each  containing a {@link org.ericace.Document} instance - and its attachment represented
+     * instances, each containing a {@link org.ericace.Document} instance - and its attachment represented
      * by a {@link org.ericace.binary.BinaryObject} instance.
      */
     public static class InternalArchiveCreator implements Callable<Boolean> {
@@ -218,14 +228,13 @@ public class ConcurrentArchiveCreator {
             try (GZIPOutputStream gzos = new GZIPOutputStream(new FileOutputStream(tarFQPN));
                  ArchiveOutputStream aos = new TarArchiveOutputStream(gzos)) {
                 while (true) {
-                    Logger.log(InternalArchiveCreator.class, "Taking from the queue");
-                    // 'take' blocks:
-                    Bin bin = queue.take();
+                    logger.info("Taking from the queue");
+                    Bin bin = queue.take(); // blocks or returns EOF (null)
                     if (bin == null) {
-                        Logger.log(InternalArchiveCreator.class, "No more items - stopping");
+                        logger.info("No more items - stopping");
                         break;
                     }
-                    Logger.log(InternalArchiveCreator.class, "Creating entry for " + bin.doc.getName());
+                    logger.info("Creating entry for {}", bin.doc.getName());
                     TarArchiveEntry entry = new TarArchiveEntry(bin.doc.getName());
                     entry.setSize(bin.object.getLength());
                     if (metrics != null) {
@@ -237,10 +246,10 @@ public class ConcurrentArchiveCreator {
                         IOUtils.copy(ois, aos);
                     }
                     aos.closeArchiveEntry();
-                    Logger.log(InternalArchiveCreator.class, "Done creating entry");
+                    logger.info("Done creating entry");
                 }
                 aos.finish();
-                Logger.log(InternalArchiveCreator.class, "Done creating archive");
+                logger.info("Done creating archive");
             } catch (Exception e) {
                 return Boolean.FALSE;
             }

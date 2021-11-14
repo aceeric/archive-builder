@@ -1,5 +1,8 @@
 package org.ericace.binary;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * Provides binaries that don't come from anywhere or hold any data - but do provide an input stream of
  * contents. Simulates a binary from S3. The binary size can be randomized within a range, and the download
@@ -7,8 +10,10 @@ package org.ericace.binary;
  */
 public class FakeBinaryProvider implements BinaryProvider {
 
+    private static final Logger logger = LogManager.getLogger(FakeBinaryProvider.class);
+
     /**
-     * Transfer rate of approx. 1 megabyte/second based on my testing in us-east-1
+     * Transfer rate of approx. 1 megabyte/second based on testing in us-east-1
      */
     private static final float BYTES_PER_SEC = 1_000_000F;
 
@@ -37,7 +42,7 @@ public class FakeBinaryProvider implements BinaryProvider {
     }
 
     /**
-     * Calculate the size for this binary, sleep to simulate transfer time, then return a fake binary
+     * Calculates the size for this binary, sleeps to simulate transfer time, then returns a fake binary
      * with the (randomized) calculated size.
      *
      * @param key Determines the content. See {@link FakeBinaryObject}

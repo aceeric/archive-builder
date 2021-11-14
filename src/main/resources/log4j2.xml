@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %level %logger{36} %T - %msg%n"/>
+<!--            <RegexFilter regex=".*Took bin.*" onMatch="ACCEPT" onMismatch="DENY" />-->
+        </Console>
+        <File name="File" fileName="logs/app.log">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} %level %logger{36} %T - %msg%n"/>
+        </File>
+    </Appenders>
+    <Loggers>
+<!--        <Logger name="org.ericace.threaded.ReorderingQueue" level="info" />-->
+<!--        <Logger name="org.ericace.threaded.EnqueuingDocumentReader" level="info" />-->
+<!--        <Logger name="org.ericace.threaded.BinaryLoader" level="info" />-->
+        <Logger name="org.ericace.Main" level="info" />
+        <Logger name="org.ericace.Metrics" level="info" />
+        <Root level="error">
+            <AppenderRef ref="Console"/>
+        </Root>
+    </Loggers>
+</Configuration>

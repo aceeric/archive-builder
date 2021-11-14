@@ -1,10 +1,16 @@
 package org.ericace;
 
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 /**
  * Represents a document. This is a simplified abstraction that provides a name, and a key representing an attachment.
  * The attachment is assumed to be stored in some other store, separately from the store that houses this document.
  */
 public class Document {
+
+    private static final Logger logger = LogManager.getLogger(Document.class);
 
     /**
      * Ensures every document created will have a unique key
