@@ -66,7 +66,8 @@ public class S3BinaryProvider implements BinaryProvider {
         this.tmpDir = tmpDir;
         this.keys = keys;
         Regions region = Regions.fromName(regionStr);
-        s3 = AmazonS3ClientBuilder.standard().withRegion(region).build();
+        AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard().withRegion(region);
+        s3 = builder.build();
         if (!Files.exists(Paths.get(tmpDir)) || !Files.isDirectory(Paths.get(tmpDir))) {
             throw new RuntimeException("Temp dir does not exist or is not a directory: " + tmpDir);
         }
@@ -88,7 +89,7 @@ public class S3BinaryProvider implements BinaryProvider {
             S3Object o = s3.getObject(bucketName, keys.get(randomKey));
             binFile = File.createTempFile("aws", ".bin", new File(tmpDir));
             try (S3ObjectInputStream s3is = o.getObjectContent(); FileOutputStream fos = new FileOutputStream(binFile)) {
-                byte[] buffer = new byte[1024];
+                byte[] buffer = new byte[8192];
                 int len;
                 while ((len = s3is.read(buffer)) > 0) {
                     fos.write(buffer, 0, len);

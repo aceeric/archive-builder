@@ -1,12 +1,16 @@
 package org.ericace.threaded;
 
+import io.prometheus.client.Counter;
+import io.prometheus.client.Summary;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ericace.binary.BinaryObject;
 import org.ericace.binary.BinaryService;
 
+import java.time.Instant;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Gets binaries for documents. Reads from an incoming queue containing documents but no attachments. Gets
@@ -15,6 +19,24 @@ import java.util.concurrent.TimeUnit;
 public class BinaryLoader implements Runnable {
 
     private static final Logger logger = LogManager.getLogger(BinaryLoader.class);
+
+    static final Summary downloadedBytes = Summary.build()
+            .name("binary_bytes_downloaded").help("Binary attachment bytes downloaded.").register();
+    static final Counter incomingQueueEmpty = Counter.build().name("binary_loader_incoming_queue_empty")
+            .help("Count of times the binary loader did not have a binary to download").register();
+    static final Counter outgoingQueueFull = Counter.build().name("binary_loader_outgoing_queue_full")
+            .help("Count of times the binary loader blocked trying to offer binary to outgoing queue").register();
+
+    /**
+     * Earliest start - provides most accurate representation of elapsed time for all threads, along with
+     * {@link #latestFinish}
+     */
+    static AtomicLong earliestStart = new AtomicLong(Long.MAX_VALUE);
+
+    /**
+     * Latest finish, along with {@link #earliestStart}
+     */
+    static AtomicLong latestFinish = new AtomicLong(0);
 
     /**
      * Provides {@link Bin} instances holding {@link org.ericace.Document} instances but no
@@ -67,11 +89,16 @@ public class BinaryLoader implements Runnable {
             try {
                 if ((bin = incomingQueue.poll(100, TimeUnit.MILLISECONDS)) == null) {
                     logger.info("Poll returned null - size = {}", incomingQueue.size());
+                    incomingQueueEmpty.inc();
                     Thread.sleep(100);
                 } else {
+                    earliestStart.set(Math.min(Instant.now().toEpochMilli(), earliestStart.get()));
                     bin.object = binaryService.getBinary(bin.doc.getKey());
+                    downloadedBytes.observe(bin.object.getLength());
+                    latestFinish.set(Math.max(Instant.now().toEpochMilli(), latestFinish.get()));
                     while (!outgoingQueue.add(bin)) {
                         logger.info("Did not add: {} - sleeping", bin.doc.getName());
+                        outgoingQueueFull.inc();
                         Thread.sleep(100);
                     }
                     logger.info("Added bin with binary to result queue: {}",  bin.doc.getName());

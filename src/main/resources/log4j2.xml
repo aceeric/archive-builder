@@ -13,7 +13,7 @@
 <!--        <Logger name="org.ericace.threaded.ReorderingQueue" level="info" />-->
 <!--        <Logger name="org.ericace.threaded.EnqueuingDocumentReader" level="info" />-->
 <!--        <Logger name="org.ericace.threaded.BinaryLoader" level="info" />-->
-        <Logger name="org.ericace.Main" level="info" />
+<!--        <Logger name="org.ericace.Main" level="info" />-->
         <Logger name="org.ericace.Metrics" level="info" />
         <Root level="error">
             <AppenderRef ref="Console"/>

@@ -46,3 +46,9 @@ docs:      50000
 bins:      1K, 10K, 100K
 duration:  00:00:43.784
 bytes/sec: 42,227,596
+
+19-NOV
+
+with 1K binaries, can never get above ~8.5 meg downloads per second
+
+HOWEVER if I change the bin size to 100K, I achieve 57.9 megabytes/sec which is the comcast max per xfinity

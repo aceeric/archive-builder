@@ -1,5 +1,6 @@
 package org.ericace;
 
+import io.prometheus.client.exporter.HTTPServer;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.ericace.binary.BinaryService;
@@ -8,8 +9,8 @@ import org.ericace.binary.S3BinaryProvider;
 import org.ericace.threaded.ConcurrentArchiveCreator;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 
 
@@ -22,13 +23,21 @@ public class Main {
 
     private static final String TAR_FQPN = "/tmp/foo.tar.gz";
 
+
     /**
      * Main method
      */
     public static void main(String[] args) throws IOException, InterruptedException, ExecutionException {
+
+        if (Args.parseArgs(args)) {
+            Args.showConfig();
+        }
+
+        //HTTPServer server = new HTTPServer.Builder().withPort(1234).build();
         //testSingleThreaded();
         //testMultiThreadedFake();
-        testMultiThreadedS3();
+        //testMultiThreadedS3();
+        //server.stop();
     }
 
     private static void testSingleThreaded() throws IOException {
@@ -71,7 +80,7 @@ public class Main {
 
     private static void testMultiThreadedS3() throws InterruptedException, ExecutionException {
         logger.info("Multi threaded S3 start");
-        ArrayList<String> keys = new ArrayList<>(List.of("1000-bytes", "10000-bytes", "100000-bytes"));
+        ArrayList<String> keys = new ArrayList<>(List.of("1000-bytes")); //, "10000-bytes")); //, "100000-bytes"));
         String bucket = System.getProperty("bucket");
         String region = System.getProperty("region");
 
@@ -79,7 +88,7 @@ public class Main {
         ConcurrentArchiveCreator creator = new ConcurrentArchiveCreator.Builder()
                 .binaryLoaderThreads(100)
                 .memCacheSize(200_000)
-                .reader(new DocumentReader(100_000))
+                .reader(new DocumentReader(50_000))
                 .binaryService(new BinaryService(new S3BinaryProvider(bucket, region, "/tmp/binaries", keys)))
                 .tarFQPN(TAR_FQPN)
                 .metrics(metrics)
@@ -89,4 +98,5 @@ public class Main {
         metrics.finishAndPrint();
         logger.info("Multi threaded S3 finish");
     }
+
 }

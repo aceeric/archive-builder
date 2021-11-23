@@ -129,6 +129,10 @@ public class ConcurrentArchiveCreator {
         logger.info("Shutting down executor service and all associated threads");
         executor.shutdownNow();
         logger.info("Done");
+
+        metrics.setBinaryBytesDownloaded(BinaryLoader.downloadedBytes.get().sum);
+        metrics.setDownloadElapsed(BinaryLoader.latestFinish.get() - BinaryLoader.earliestStart.get());
+        metrics.setBinaryDownloadCount(BinaryLoader.downloadedBytes.get().count);
         return result;
     }
 
