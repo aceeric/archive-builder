@@ -29,6 +29,7 @@ public class AppTest
     /**
      * This isn't a test, it's for debugging S3 downloads
      */
+    @Ignore
     @Test
     public void testS3Download() throws IOException {
         assertNotNull(BUCKET);

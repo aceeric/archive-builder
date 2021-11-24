@@ -18,15 +18,13 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class BinaryLoader implements Runnable {
 
-    private static final Logger logger = LogManager.getLogger(BinaryLoader.class);
-
     static final Summary downloadedBytes = Summary.build()
             .name("binary_bytes_downloaded").help("Binary attachment bytes downloaded.").register();
     static final Counter incomingQueueEmpty = Counter.build().name("binary_loader_incoming_queue_empty")
             .help("Count of times the binary loader did not have a binary to download").register();
     static final Counter outgoingQueueFull = Counter.build().name("binary_loader_outgoing_queue_full")
             .help("Count of times the binary loader blocked trying to offer binary to outgoing queue").register();
-
+    private static final Logger logger = LogManager.getLogger(BinaryLoader.class);
     /**
      * Earliest start - provides most accurate representation of elapsed time for all threads, along with
      * {@link #latestFinish}
@@ -101,7 +99,7 @@ public class BinaryLoader implements Runnable {
                         outgoingQueueFull.inc();
                         Thread.sleep(100);
                     }
-                    logger.info("Added bin with binary to result queue: {}",  bin.doc.getName());
+                    logger.info("Added bin with binary to result queue: {}", bin.doc.getName());
                 }
             } catch (InterruptedException e) {
                 logger.info("Interrupted - stopping");

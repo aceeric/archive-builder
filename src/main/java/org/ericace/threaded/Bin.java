@@ -4,7 +4,7 @@ import org.ericace.Document;
 import org.ericace.binary.BinaryObject;
 
 /**
- * Not "bin" as in "binary". "Bin" as in "container".
+ * Not "bin" as in "binary": "Bin" as in "container".
  * <p>
  * The <code>Bin</code> class is a value class that holds: a document, a binary object, and a sequence number
  * representing the order in which said document was consumed from a {@link org.ericace.DocumentReader}. This
@@ -18,7 +18,7 @@ import org.ericace.binary.BinaryObject;
  *         monotonically increasing sequence number representing the order in which the document was read
  *         from the reader</li>
  *     <li>The bin is placed on a conveyor that goes to a pool of binary providers</li>
- *     <li>Each binary provider takes a bin from the conveyer as soon as it can, obtains the binary for the doc
+ *     <li>Each binary provider takes a bin from the conveyor as soon as it can, obtains the binary for the doc
  *         in the bin as quickly as it can, places that binary in the bin, and puts the bin on another conveyor
  *         to an ordering entity</li>
  *     <li>The ordering entity ensures that everything coming to it on the second conveyor is published to

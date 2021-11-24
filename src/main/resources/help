@@ -18,9 +18,10 @@ Primary options:
   -b, --binary-provider  Specifies the provider for document attachments. Supported values are 'fake', and 's3client'.
                          If not specified, the fake provider is used. The fake provider provides an attachment input
                          stream of the size specified in the --binary-size option. Its purpose is to test the utility
-                         without introducing real I/O. The s3client provider uses the AWS SDK 'AmazonS3' class to
-                         get binaries from an S3 bucket. Additional configs are required for this as described below.
-                         The s3client provider requires a configured ~/.aws/credentials file.
+                         without introducing real I/O. (To focus on threading.) The s3client provider uses the AWS
+                         SDK 'AmazonS3' class to get binaries from an S3 bucket. Additional configs are required
+                         for this as described below. The s3client provider also requires a configured
+                         ~/.aws/credentials file.
 
   -a, --archive          Fully-qualified path name of the TAR to generate. E.g. '/foo/bar/frobozz.tar'. This option
                          is required.
@@ -51,24 +52,26 @@ Optional:
 
   -d, --document-count   The number of "documents" provided by the Reader. The Reader and Documents are stubbed
                          for the purpose of demonstrating the design. If not provided, then a value of 50,000
-                         is used by the utility.
-  -m, --metrics-port     Specifies the port number for metrics. If not supplied, 1234 is used. Therefore,
-                         metrics are available on http://localhost:1234/metrics
+                         is used by the utility. The only piece of metadata returned by the stubbed document
+                         reader is a document name.
+  -m, --metrics-port     Specifies the port number for Prometheus metrics. If not supplied, 1234 is used, in which
+                         case metrics are available on http://localhost:1234/metrics.
+  -f, --show-config      Diagnostic aid: shows how the command line was parsed and exits without doing anything.
   -h, --help             Prints this help and exits.
 
 Examples:
 
-archive-builder --scenario=single --binary-provider=fake --document-count=50000\
-  --binary-size=100,100000 --archive=~/foo.tar
+java -jar target/archive-builder.jar --scenario=single --binary-provider=fake --document-count=50000\
+  --binary-size=100,1000 --archive=/tmp/foo.tar.gz
 
-Builds foo.tar on a single Java thread in the user's home directory, consisting of 50 thousand
-documents, each with a fake binary attachment ranging in size from 100 bytes to 100K bytes.
+Builds foo.tar on a single thread in the user's home directory, consisting of 50 thousand documents,
+each with a fake binary attachment ranging in size from 100 bytes to 1K bytes.
 
-archive-builder --scenario=multi --binary-provider=s3client --document-count=50000\
+java -jar target/archive-builder.jar --scenario=multi --binary-provider=s3client --document-count=50000\
   --threads=50 --cache-size=50000 --bucket=my-bucket --region=us-west-1 --keys=smallbin,mediumbin,bigbin\
-  --archive=~/foo.tar
+  --archive=/tmp/foo.tar.gz
 
 Builds foo.tar on 50 threads in the user's home directory consisting of 50 thousand documents each with an
-attachment randomly downloaded from an S3 bucket from the provided list. An in-mem cache of size 50K is used
-to order the binary attachments in the same order provided by the reader. The specified bucket and region
-contain the named objects.
+attachment downloaded from an S3 bucket named 'my-bucket'. Objects are selected at random from the list 'smallbin',
+'mediumbin', and 'bigbin', which are all expected to exist in the bucket. An in-mem cache of size 50K items is used
+to order the binary attachments in the same order provided by the reader.

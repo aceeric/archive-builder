@@ -3,17 +3,20 @@ package org.ericace.binary;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.util.List;
+
 /**
  * Provides binaries that don't come from anywhere or hold any data - but do provide an input stream of
- * contents. Simulates a binary from S3. The binary size can be randomized within a range, and the download
- * duration is derived from the size, based on a transfer rate defined by the {@link #BYTES_PER_SEC} field.
+ * contents. Simulates a binary from S3. The binary size can be randomized within a size range, and the download
+ * duration simulated by the class is derived from the size, based on a transfer rate defined by
+ * the {@link #BYTES_PER_SEC} field.
  */
 public class FakeBinaryProvider implements BinaryProvider {
 
     private static final Logger logger = LogManager.getLogger(FakeBinaryProvider.class);
 
     /**
-     * Transfer rate of approx. 1 megabyte/second based on testing in us-east-1
+     * Transfer rate of approx. 1 megabyte/second based on testing in AWS us-east-1
      */
     private static final float BYTES_PER_SEC = 1_000_000F;
 
@@ -27,6 +30,11 @@ public class FakeBinaryProvider implements BinaryProvider {
      */
     public FakeBinaryProvider(int length) {
         this(length, length);
+    }
+
+    public FakeBinaryProvider(List<Integer> lengths) {
+        minLength = lengths.get(0);
+        maxLength = lengths.size() > 1 ? lengths.get(1) : minLength;
     }
 
     /**

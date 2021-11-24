@@ -14,7 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -45,7 +45,7 @@ public class S3BinaryProvider implements BinaryProvider {
      * A list of keys. These will be used by the {@link #getBinary} method instead of the key passed to that
      * method.
      */
-    private final ArrayList<String> keys;
+    private final List<String> keys;
 
     /**
      * A temp dir to download objects from S3 into
@@ -61,7 +61,7 @@ public class S3BinaryProvider implements BinaryProvider {
      *                   input stream is closed.)
      * @param keys       A list of keys from which to randomly select objects to download. (See {@link #getBinary}.)
      */
-    public S3BinaryProvider(String bucketName, String regionStr, String tmpDir, ArrayList<String> keys) {
+    public S3BinaryProvider(String bucketName, String regionStr, String tmpDir, List<String> keys) {
         this.bucketName = bucketName;
         this.tmpDir = tmpDir;
         this.keys = keys;

@@ -16,7 +16,7 @@ public class ReorderingQueue {
     private static final Logger logger = LogManager.getLogger(ReorderingQueue.class);
 
     /**
-     * <code>Bin</code> instances are cached here
+     * <code>Bin</code> instances are cached here to be provided to consumers
      */
     private final ConcurrentHashMap<Long, Bin> map;
 
@@ -29,7 +29,7 @@ public class ReorderingQueue {
     /**
      * Total items to return to consumers. If -1 (set by class initializer) then we don't yet know how many items
      * to return so the <code>take</code> method can never return EOF. Once set, however, the <code>take</code> method
-     * can use it to determine whether all items have been taken by consumers, and can thus retrurn EOF.
+     * can use this value to determine whether all items have been taken by consumers, and can thus return EOF.
      */
     final private AtomicLong totalItems = new AtomicLong(-1);
 

@@ -11,7 +11,7 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A simple class to tabulate some basic metrics
+ * A simple class to tabulate some metrics
  */
 public class Metrics {
 
@@ -21,16 +21,36 @@ public class Metrics {
             .withLocale(Locale.ENGLISH)
             .withZone(ZoneId.systemDefault());
 
+    /**
+     * When the TAR generation process started
+     */
     private Instant start;
+
+    /**
+     * When the TAR generation process finished
+     */
     private Instant finish;
+
+    /**
+     * TAR generation elapsed time
+     */
     private Duration elapsed;
+
+    /**
+     * The number of binary bytes - uncompressed - written to the TAR
+     */
     private long binaryBytesWritten;
+
+    /**
+     * The number of binary bytes downloaded from the binary provider
+     */
     private double binaryBytesDownloaded;
-    private double binaryDownloadCount;
 
+    /**
+     * The amount of time spent downloading binaries across all threads - i.e. earliest download end minus
+     * earliest download start
+     */
     private long downloadElapsed;
-
-    public Metrics() {}
 
     /**
      * Maintains a running tally of {@link org.ericace.binary.BinaryObject} bytes written to the TAR
@@ -49,10 +69,6 @@ public class Metrics {
         this.downloadElapsed = downloadElapsed;
     }
 
-    public void setBinaryDownloadCount(double binaryDownloadCount) {
-        this.binaryDownloadCount = binaryDownloadCount;
-    }
-
     public void start() {
         start = Instant.now();
     }
@@ -68,7 +84,7 @@ public class Metrics {
     }
 
     public void print() {
-        StringBuilder metrics = new StringBuilder();
+        StringBuilder metrics = new StringBuilder("\n");
         metrics.append(String.format("%41s: %s\n", "Start", fmt.format(start)));
         metrics.append(String.format("%41s: %s\n", "Finish", fmt.format(finish)));
         metrics.append(String.format("%41s: %s\n", "Elapsed (HH:MM:SS:millis)", formatElapsed(elapsed)));

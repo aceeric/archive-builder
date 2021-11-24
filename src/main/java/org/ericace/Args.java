@@ -11,54 +11,61 @@ import java.util.*;
  * Accepts this form: -t 1 and --threads 1, as well as this form -t=1 and --threads=1. Does not accept
  * concatenated short form opts in cases where such opts don't accept params. E.g. doesn't handle: -ot=1 where
  * -o is a parameterless option, and -t takes a value (one in this example.) Doesn't have great error handling
- * so - is fragile with respect to parsing errors.
+ * so - is somewhat fragile with respect to parsing errors.
  */
 class Args {
-    static Scenario scenario = null;
-    static BinaryProvider binaryProvider = null;
-    static int documentCount = 0;
-    static List<Integer> binarySizes = new ArrayList<>();
-    static int cacheSize = 0;
-    static int threadCount = 0;
-    static int metricsPort = 0;
-    static String archiveFqpn = null;
-    static String bucketName = null;
-    static String region = null;
-    static List<String> keys = new ArrayList<>();
+    Scenario scenario = null;
+    BinaryProvider binaryProvider = null;
+    int documentCount = 0;
+    List<Integer> binarySizes = new ArrayList<>();
+    int cacheSize = 0;
+    int threadCount = 0;
+    int metricsPort = 0;
+    String archiveFqpn = null;
+    String bucketName = null;
+    String region = null;
+    boolean showConfig = false;
+    List<String> keys = new ArrayList<>();
 
-    private static String parseMessage;
+    private String parseMessage;
+
+    static Args parse(String[] args) {
+        Args parsedArgs = new Args();
+        return parsedArgs.parseArgs(args) ? parsedArgs : null;
+    }
 
     /**
      * Displays the configuration derived from the command line to the console.
      */
-    static void showConfig() {
-        StringBuilder cfg = new StringBuilder();
-        cfg.append("Scenario: " + scenario  + "\n");
-        cfg.append("Binary Provider: " + binaryProvider  + "\n");
-        cfg.append("Document Count: " + documentCount  + "\n");
-        cfg.append("Metrics Port: " + metricsPort  + "\n");
-        cfg.append("TAR File: " + archiveFqpn  + "\n");
+    void showConfig() {
+        String cfg = "Scenario: " + scenario + "\n" +
+                "Binary Provider: " + binaryProvider + "\n" +
+                "Document Count: " + documentCount + "\n" +
+                "Metrics Port: " + metricsPort + "\n" +
+                "TAR File: " + archiveFqpn + "\n" +
+                "Show Config: " + showConfig + "\n";
         if (scenario == Scenario.multi) {
-            cfg.append("Cache Size: " + cacheSize + "\n");
-            cfg.append("Thread Count: " + threadCount + "\n");
+            cfg += "Cache Size: " + cacheSize + "\n" +
+                    "Thread Count: " + threadCount + "\n";
         }
         if (binaryProvider == BinaryProvider.fake) {
-            cfg.append("Binary Sizes: " + binarySizes + "\n");
+            cfg += "Binary Sizes: " + binarySizes + "\n";
         }
         if (binaryProvider == BinaryProvider.s3client) {
-            cfg.append("Bucket Name: " + bucketName + "\n");
-            cfg.append("Region: " + region + "\n");
-            cfg.append("Keys: " + keys + "\n");
+            cfg += "Bucket Name: " + bucketName + "\n" +
+                    "Region: " + region + "\n" +
+                    "Keys: " + keys + "\n";
         }
         System.out.println(cfg);
     }
+
     /**
      * Parses the command line.
      *
      * @param args command-line args
-     * @return False if there was an arg parse error, else return True
+     * @return False if there was an arg parse error, else true
      */
-    static boolean parseArgs(String[] args) {
+    private boolean parseArgs(String[] args) {
         Queue<String> argQueue = new LinkedList<>();
         for (String arg : args) {
             String[] s = arg.split("=");
@@ -138,10 +145,14 @@ class Args {
                             parsedOk = false;
                         }
                         break;
+                    case "-f":
+                    case "--show-config":
+                        showConfig = true;
+                        break;
                     case "-h":
                     case "--help":
-                        try (InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("help");
-                             InputStreamReader rdr = new InputStreamReader(is);
+                        try (InputStream inputStream = ClassLoader.getSystemClassLoader().getResourceAsStream("help");
+                             InputStreamReader rdr = new InputStreamReader(inputStream);
                              BufferedReader reader = new BufferedReader(rdr)) {
                             reader.lines().forEach(System.out::println);
                         }
@@ -169,7 +180,7 @@ class Args {
         return true;
     }
 
-    private static void setDefaults() {
+    private void setDefaults() {
         if (scenario == null) scenario = Scenario.single;
         if (binaryProvider == null) binaryProvider = BinaryProvider.fake;
         if (documentCount == 0) documentCount = 50_000;
@@ -181,7 +192,7 @@ class Args {
         }
     }
 
-    private static boolean optsAreValid() {
+    private boolean optsAreValid() {
         if (archiveFqpn == null) {
             parseMessage = "Missing required FQPN of TAR file to create";
             return false;
@@ -202,29 +213,29 @@ class Args {
         return true;
     }
 
-    private static boolean parseScenario(String param) {
+    private boolean parseScenario(String param) {
         if (notParseable(param)) return false;
         List<String> scenarios = Arrays.asList("single", "multi");
         if (!scenarios.contains(param)) {
             parseMessage = "Unknown scenario: " + param;
             return false;
         }
-        Args.scenario = Scenario.valueOf(param);
+        scenario = Scenario.valueOf(param);
         return true;
     }
 
-    private static boolean parseBinaryProvider(String param) {
+    private boolean parseBinaryProvider(String param) {
         if (notParseable(param)) return false;
         List<String> binaryProviders = Arrays.asList("fake", "s3client");
         if (!binaryProviders.contains(param)) {
             parseMessage = "Unknown binary provider: " + param;
             return false;
         }
-        Args.binaryProvider = BinaryProvider.valueOf(param);
+        binaryProvider = BinaryProvider.valueOf(param);
         return true;
     }
 
-    private static boolean parseDocumentCount(String param) {
+    private boolean parseDocumentCount(String param) {
         if (notParseable(param)) return false;
         documentCount = safeParseInt(param);
         if (documentCount < 0) {
@@ -234,7 +245,7 @@ class Args {
         return true;
     }
 
-    private static boolean parseMetricsPort(String param) {
+    private boolean parseMetricsPort(String param) {
         if (notParseable(param)) return false;
         metricsPort = safeParseInt(param);
         if (metricsPort < 0) {
@@ -244,7 +255,7 @@ class Args {
         return true;
     }
 
-    private static boolean parseBinarySizes(String param) {
+    private boolean parseBinarySizes(String param) {
         if (notParseable(param)) return false;
         String[] params = param.split(",");
         for (String item : params) {
@@ -261,7 +272,7 @@ class Args {
         return true;
     }
 
-    private static boolean parseCacheSize(String param) {
+    private boolean parseCacheSize(String param) {
         if (notParseable(param)) return false;
         cacheSize = safeParseInt(param);
         if (cacheSize < 0) {
@@ -271,7 +282,7 @@ class Args {
         return true;
     }
 
-    private static boolean parseThreadCount(String param) {
+    private boolean parseThreadCount(String param) {
         if (notParseable(param)) return false;
         threadCount = safeParseInt(param);
         if (threadCount < 0) {
@@ -281,8 +292,9 @@ class Args {
         return true;
     }
 
-    private static boolean parseArchiveFqpn(String param) {
+    private boolean parseArchiveFqpn(String param) {
         if (notParseable(param)) return false;
+        param = param.replaceFirst("^~", System.getProperty("user.home"));
         try {
             if (Paths.get(param).getParent().toAbsolutePath().toFile().isDirectory()) {
                 archiveFqpn = Paths.get(param).toAbsolutePath().toString();
@@ -297,25 +309,25 @@ class Args {
         return true;
     }
 
-    private static boolean parseBucketName(String param) {
+    private boolean parseBucketName(String param) {
         if (notParseable(param)) return false;
         bucketName = param;
         return true;
     }
 
-    private static boolean parseRegion(String param) {
+    private boolean parseRegion(String param) {
         if (notParseable(param)) return false;
         region = param;
         return true;
     }
 
-    private static boolean parseKeys(String param) {
+    private boolean parseKeys(String param) {
         if (notParseable(param)) return false;
         keys = Arrays.asList(param.split(","));
         return true;
     }
 
-    private static boolean notParseable(String param) {
+    private boolean notParseable(String param) {
         if (param == null || param.trim().length() == 0) {
             parseMessage = "Expected a parameter";
             return true;
@@ -326,7 +338,7 @@ class Args {
         return false;
     }
 
-    private static int safeParseInt(String param) {
+    private int safeParseInt(String param) {
         try {
             return Integer.parseInt(param);
         } catch (Exception e) {
