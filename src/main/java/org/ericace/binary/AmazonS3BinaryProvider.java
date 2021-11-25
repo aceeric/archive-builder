@@ -27,9 +27,9 @@ import java.util.concurrent.ThreadLocalRandom;
  *         with one key. Otherwise initialize the list with keys representing S3 objects of varying size.</li>
  * </ol>
  */
-public class S3BinaryProvider implements BinaryProvider {
+public class AmazonS3BinaryProvider implements BinaryProvider {
 
-    private static final Logger logger = LogManager.getLogger(S3BinaryProvider.class);
+    private static final Logger logger = LogManager.getLogger(AmazonS3BinaryProvider.class);
 
     /**
      * How we talk to AWS
@@ -61,7 +61,7 @@ public class S3BinaryProvider implements BinaryProvider {
      *                   input stream is closed.)
      * @param keys       A list of keys from which to randomly select objects to download. (See {@link #getBinary}.)
      */
-    public S3BinaryProvider(String bucketName, String regionStr, String tmpDir, List<String> keys) {
+    public AmazonS3BinaryProvider(String bucketName, String regionStr, String tmpDir, List<String> keys) {
         this.bucketName = bucketName;
         this.tmpDir = tmpDir;
         this.keys = keys;
@@ -96,9 +96,14 @@ public class S3BinaryProvider implements BinaryProvider {
                 }
             }
         } catch (AmazonServiceException | IOException e) {
-            logger.error("Could not get binary. Thread is terminating.");
+            logger.error("Could not get binary");
             throw new RuntimeException("Could not get binary: " + key);
         }
         return new LocalFileBinaryObject(binFile);
+    }
+
+    @Override
+    public void shutDownNow() {
+        // NOP
     }
 }

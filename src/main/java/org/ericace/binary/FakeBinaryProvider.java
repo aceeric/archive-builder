@@ -74,4 +74,9 @@ public class FakeBinaryProvider implements BinaryProvider {
         }
         return new FakeBinaryObject(key, (int) lengthActual);
     }
+
+    @Override
+    public void shutDownNow() {
+        // NOP
+    }
 }

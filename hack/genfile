@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
 # This script supports testing by generating a file for uploading into an S3 bucket that can subsequently be
-# downloaded by the app to test concurrency performance characteristics. The script generates a specified size
-# file filled with repetitive text "n bytes n bytes..." where 'n' is the size specified on the command line.
+# downloaded by the app to test concurrency performance characteristics. The script generates a specified sized
+# file, filled with repetitive text "n bytes n bytes..." where 'n' is the size specified on the command line.
 #
 # Usage
 #

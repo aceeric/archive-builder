@@ -30,7 +30,7 @@ public class ThreadedArchiveCreator implements ArchiveCreator {
 
     /**
      * This is the incoming queue for the class.
-     *
+     * <p>
      * This queue contains {@link Bin} instances with only a document. The pool of {@link BinaryLoader} instances
      * will read from this queue, get the binary for the doc, put it in the bin, and write the bin to
      * the {@link #archiveBuilderQueue}.
@@ -39,7 +39,7 @@ public class ThreadedArchiveCreator implements ArchiveCreator {
 
     /**
      * This is the outgoing queue for the class.
-     *
+     * <p>
      * This queue contains {@link Bin} instances, each holding both a document and a binary, and it is guaranteed
      * to provide items in the same order as the docs provided by the {@link DocumentReader} passed to
      * the {@link #createArchive} method.
@@ -129,11 +129,11 @@ public class ThreadedArchiveCreator implements ArchiveCreator {
 
         logger.info("Shutting down executor service and all associated threads");
         executor.shutdownNow();
+        binaryService.shutDownProvider();
         logger.info("Done");
 
         metrics.setBinaryBytesDownloaded(BinaryLoader.downloadedBytes.get().sum);
         metrics.setDownloadElapsed(BinaryLoader.latestFinish.get() - BinaryLoader.earliestStart.get());
-        metrics.setBinaryDownloadCount(BinaryLoader.downloadedBytes.get().count);
     }
 
     @Override

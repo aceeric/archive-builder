@@ -1,27 +1,36 @@
 package org.ericace;
 
-import org.ericace.binary.BinaryProvider;
-import org.ericace.binary.BinaryService;
-import org.ericace.binary.FakeBinaryProvider;
-import org.ericace.binary.S3BinaryProvider;
+import org.ericace.binary.*;
 import org.ericace.threaded.ThreadedArchiveCreator;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * A factory to create {@link ArchiveCreator} instances from configuration info specified on the command line
- * that is encapsulated in an {@link Args} instance.
+ * A factory to create {@link ArchiveCreator} instances from configuration info specified on the command line.
  */
 public class ArchiveCreatorFactory {
+    /**
+     * Creates an <code>ArchiveCreator</code> instance from command-line params
+     * @param args The type of archive creator specified on the command line
+     * @return the created instance
+     */
     public static ArchiveCreator fromArgs(Args args) {
         DocumentReader reader = new DocumentReader(args.documentCount);
         BinaryProvider provider = null;
-        if (args.binaryProvider == Args.BinaryProvider.fake) {
-            provider = new FakeBinaryProvider(args.binarySizes);
-        } else {
-            Path binCache = Paths.get(System.getProperty("java.io.tmpdir"), "binaries");
-            provider = new S3BinaryProvider(args.bucketName, args.region, binCache.toAbsolutePath().toString(), args.keys);
+        Path binCache = Paths.get(System.getProperty("java.io.tmpdir"), "binaries");
+        switch (args.binaryProvider) {
+            case fake:
+                provider = new FakeBinaryProvider(args.binarySizes);
+                break;
+            case s3client:
+                provider = new AmazonS3BinaryProvider(args.bucketName, args.region, binCache.toAbsolutePath()
+                        .toString(), args.keys);
+                break;
+            case transfermanager:
+                provider = new S3TransferManagerBinaryProvider(args.threadCount, args.bucketName, args.region,
+                        binCache.toAbsolutePath().toString(), args.keys);
+                break;
         }
         Metrics metrics = new Metrics();
         if (args.scenario == Args.Scenario.multi) {

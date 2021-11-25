@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 
 /**
  * A binary object over a local file.
@@ -29,6 +30,15 @@ public class LocalFileBinaryObject implements BinaryObject {
         this.file = file;
     }
 
+    /**
+     * Constructor
+     *
+     * @param path a path from which to get a file for the class to wrap
+     */
+    LocalFileBinaryObject(Path path) {
+        this.file = path.toFile();
+    }
+
     @Override
     public int getLength() {
         return (int) file.length();
@@ -49,4 +59,12 @@ public class LocalFileBinaryObject implements BinaryObject {
         };
     }
 
+    /**
+     * Gets the path of the wrapped file.
+     *
+     * @return the path
+     */
+    public String getAbsolutePath() {
+        return file.getAbsolutePath();
+    }
 }

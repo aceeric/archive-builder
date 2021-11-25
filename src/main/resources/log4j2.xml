@@ -9,6 +9,7 @@
         </File>
     </Appenders>
     <Loggers>
+        <Logger name="org.ericace.Main" level="info" />
         <Logger name="org.ericace.Metrics" level="info" />
         <Root level="error">
             <AppenderRef ref="Console"/>

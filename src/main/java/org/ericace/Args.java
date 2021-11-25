@@ -26,9 +26,17 @@ class Args {
     String region = null;
     boolean showConfig = false;
     List<String> keys = new ArrayList<>();
+    List<String> loggers = new ArrayList<>();
 
     private String parseMessage;
 
+    /**
+     * Parse the command line args and return them in an {@link Args} instance
+     *
+     * @param args from the JVM command line
+     * @return parsed args, or null if there was an error. If an error, the message will have been
+     * displayed to the console by the class before this method returns to the caller.
+     */
     static Args parse(String[] args) {
         Args parsedArgs = new Args();
         return parsedArgs.parseArgs(args) ? parsedArgs : null;
@@ -43,7 +51,8 @@ class Args {
                 "Document Count: " + documentCount + "\n" +
                 "Metrics Port: " + metricsPort + "\n" +
                 "TAR File: " + archiveFqpn + "\n" +
-                "Show Config: " + showConfig + "\n";
+                "Show Config: " + showConfig + "\n" +
+                "Loggers: " + loggers + "\n";
         if (scenario == Scenario.multi) {
             cfg += "Cache Size: " + cacheSize + "\n" +
                     "Thread Count: " + threadCount + "\n";
@@ -51,7 +60,7 @@ class Args {
         if (binaryProvider == BinaryProvider.fake) {
             cfg += "Binary Sizes: " + binarySizes + "\n";
         }
-        if (binaryProvider == BinaryProvider.s3client) {
+        if (binaryProvider == BinaryProvider.s3client || binaryProvider == BinaryProvider.transfermanager) {
             cfg += "Bucket Name: " + bucketName + "\n" +
                     "Region: " + region + "\n" +
                     "Keys: " + keys + "\n";
@@ -79,6 +88,12 @@ class Args {
         while (parsedOk & (arg = argQueue.poll()) != null) {
             try {
                 switch (arg.toLowerCase()) {
+                    case "-l":
+                    case "--loggers":
+                        if (!parseLoggers(argQueue.poll())) {
+                            parsedOk = false;
+                        }
+                        break;
                     case "-c":
                     case "--scenario":
                         if (!parseScenario(argQueue.poll())) {
@@ -180,6 +195,9 @@ class Args {
         return true;
     }
 
+    /**
+     * Sets default values for various options
+     */
     private void setDefaults() {
         if (scenario == null) scenario = Scenario.single;
         if (binaryProvider == null) binaryProvider = BinaryProvider.fake;
@@ -192,14 +210,19 @@ class Args {
         }
     }
 
+    /**
+     * Validates the current args in instance state
+     *
+     * @return true if valid, else false
+     */
     private boolean optsAreValid() {
         if (archiveFqpn == null) {
             parseMessage = "Missing required FQPN of TAR file to create";
             return false;
         }
-        if (binaryProvider == BinaryProvider.s3client) {
+        if (binaryProvider == BinaryProvider.s3client || binaryProvider == BinaryProvider.transfermanager) {
             if (region == null || bucketName == null || keys.size() == 0) {
-                parseMessage = "The s3client binary provider requires all three of: bucket, region, and keys";
+                parseMessage = "The s3client and transfer manager binary providers requires all three of: bucket, region, and keys";
                 return false;
             }
         } else if (region != null || bucketName != null || keys.size() != 0) {
@@ -213,9 +236,13 @@ class Args {
         return true;
     }
 
+    /**
+     * Parses the --scenario opt
+     * @return true if ok
+     */
     private boolean parseScenario(String param) {
         if (notParseable(param)) return false;
-        List<String> scenarios = Arrays.asList("single", "multi");
+        List<String> scenarios = Arrays.asList(Scenario.single.name(), Scenario.multi.name());
         if (!scenarios.contains(param)) {
             parseMessage = "Unknown scenario: " + param;
             return false;
@@ -224,9 +251,14 @@ class Args {
         return true;
     }
 
+    /**
+     * Parses the --binary-provider opt
+     * @return true if ok
+     */
     private boolean parseBinaryProvider(String param) {
         if (notParseable(param)) return false;
-        List<String> binaryProviders = Arrays.asList("fake", "s3client");
+        List<String> binaryProviders = Arrays.asList(BinaryProvider.fake.name(), BinaryProvider.s3client.name(),
+                BinaryProvider.transfermanager.name());
         if (!binaryProviders.contains(param)) {
             parseMessage = "Unknown binary provider: " + param;
             return false;
@@ -235,6 +267,10 @@ class Args {
         return true;
     }
 
+    /**
+     * Parses the --document-count opt
+     * @return true if ok
+     */
     private boolean parseDocumentCount(String param) {
         if (notParseable(param)) return false;
         documentCount = safeParseInt(param);
@@ -245,6 +281,10 @@ class Args {
         return true;
     }
 
+    /**
+     * Parses the --metrics-port opt
+     * @return true if ok
+     */
     private boolean parseMetricsPort(String param) {
         if (notParseable(param)) return false;
         metricsPort = safeParseInt(param);
@@ -255,6 +295,10 @@ class Args {
         return true;
     }
 
+    /**
+     * Parses the --binary-size opt
+     * @return true if ok
+     */
     private boolean parseBinarySizes(String param) {
         if (notParseable(param)) return false;
         String[] params = param.split(",");
@@ -272,6 +316,10 @@ class Args {
         return true;
     }
 
+    /**
+     * Parses the --cache-size opt
+     * @return true if ok
+     */
     private boolean parseCacheSize(String param) {
         if (notParseable(param)) return false;
         cacheSize = safeParseInt(param);
@@ -282,6 +330,10 @@ class Args {
         return true;
     }
 
+    /**
+     * Parses the --threads opt
+     * @return true if ok
+     */
     private boolean parseThreadCount(String param) {
         if (notParseable(param)) return false;
         threadCount = safeParseInt(param);
@@ -292,6 +344,10 @@ class Args {
         return true;
     }
 
+    /**
+     * Parses the --archive opt
+     * @return true if ok
+     */
     private boolean parseArchiveFqpn(String param) {
         if (notParseable(param)) return false;
         param = param.replaceFirst("^~", System.getProperty("user.home"));
@@ -309,24 +365,51 @@ class Args {
         return true;
     }
 
+    /**
+     * Parses the --bucket opt
+     * @return true if ok
+     */
     private boolean parseBucketName(String param) {
         if (notParseable(param)) return false;
         bucketName = param;
         return true;
     }
 
+    /**
+     * Parses the --region opt
+     * @return true if ok
+     */
     private boolean parseRegion(String param) {
         if (notParseable(param)) return false;
         region = param;
         return true;
     }
 
+    /**
+     * Parses the --loggers opt
+     * @return true if ok
+     */
+    private boolean parseLoggers(String param) {
+        if (notParseable(param)) return false;
+        loggers = Arrays.asList(param.split(","));
+        return true;
+    }
+
+    /**
+     * Parses the --keys opt
+     * @return true if ok
+     */
     private boolean parseKeys(String param) {
         if (notParseable(param)) return false;
         keys = Arrays.asList(param.split(","));
         return true;
     }
 
+    /**
+     * Determines if a param is parseable.
+     *
+     * @return true if parseable
+     */
     private boolean notParseable(String param) {
         if (param == null || param.trim().length() == 0) {
             parseMessage = "Expected a parameter";
@@ -338,6 +421,11 @@ class Args {
         return false;
     }
 
+    /**
+     * Safely parses the passed param as an integer value
+     *
+     * @return the value, or -1 if it was not parseable
+     */
     private int safeParseInt(String param) {
         try {
             return Integer.parseInt(param);
@@ -346,8 +434,14 @@ class Args {
         }
     }
 
+    /**
+     * Defines the archive builder scenarios - single threaded, or multi-threaded
+     */
     enum Scenario {single, multi}
 
-    enum BinaryProvider {fake, s3client}
+    /**
+     * Defines the binary providers - fake, s3client, or transfer manager
+     */
+    enum BinaryProvider {fake, s3client, transfermanager}
 
 }

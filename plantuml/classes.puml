@@ -1,0 +1,33 @@
+#./src/main/java/org/ericace/threaded/Bin.java
+#./src/main/java/org/ericace/threaded/EnqueuingDocumentReader.java
+#./src/main/java/org/ericace/threaded/ReorderingQueue.java
+#./src/main/java/org/ericace/threaded/BinaryLoader.java
+@startuml
+
+interface ArchiveCreator
+interface BinaryProvider
+interface BinaryObject
+class ArchiveCreatorFactory
+class DocumentReader
+class BinaryService
+class Main
+class Document
+class Args
+
+ArchiveCreator -- DocumentReader
+ArchiveCreator -- BinaryObject
+DocumentReader -- Document
+ArchiveCreator -- BinaryService
+ArchiveCreator -- Document
+BinaryService -- BinaryProvider
+BinaryService -- BinaryObject
+BinaryProvider -- BinaryObject
+Main -- ArchiveCreatorFactory
+Main -- Args
+Main -- ArchiveCreator
+ArchiveCreatorFactory -- ArchiveCreator
+ArchiveCreatorFactory -- Args
+ArchiveCreatorFactory -- DocumentReader
+ArchiveCreatorFactory -- BinaryProvider
+ArchiveCreatorFactory -- BinaryService
+@enduml

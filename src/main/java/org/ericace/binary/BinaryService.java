@@ -10,7 +10,7 @@ public class BinaryService {
     /**
      * Constructor
      *
-     * @param provider The provider that will provide binaries
+     * @param provider The provider that will provide binary objects
      */
     public BinaryService(BinaryProvider provider) {
         this.provider = provider;
@@ -24,5 +24,12 @@ public class BinaryService {
      */
     public BinaryObject getBinary(String key) {
         return provider.getBinary(key);
+    }
+
+    /**
+     * Performs a shutdown on the binary provider, as determined by the provider implementation
+     */
+    public void shutDownProvider() {
+        provider.shutDownNow();
     }
 }

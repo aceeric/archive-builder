@@ -11,4 +11,9 @@ public interface BinaryProvider {
      * @return The object.
      */
     BinaryObject getBinary(String key);
+
+    /**
+     * In case the provider needs a shutdown to clean itself up
+     */
+    void shutDownNow();
 }
