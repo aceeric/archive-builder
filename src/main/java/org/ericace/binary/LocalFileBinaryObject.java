@@ -10,7 +10,7 @@ import java.io.InputStream;
 import java.nio.file.Path;
 
 /**
- * A binary object over a local file.
+ * A binary object over a local transient temporary file. (See {@link #getInputStream})
  */
 public class LocalFileBinaryObject implements BinaryObject {
 

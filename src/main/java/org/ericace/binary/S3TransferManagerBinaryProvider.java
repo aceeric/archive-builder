@@ -16,12 +16,14 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * Gets S3 binaries using the {@link TransferManager} AWS SDK class, which supports the ability to
- * define a custom executor pool. However, since this is ultimately rate-limited by AWS, it didn't have
- * any performance impact over the {@link AmazonS3BinaryProvider} class. Amazon rate-limits S3 GET operations
- * to 5,500 per second per prefix.
+ * Performs the same function as the {@link AmazonS3BinaryProvider} class, except gets S3 binaries using the
+ * {@link TransferManager} AWS SDK class, which supports the ability to define a custom executor pool. However,
+ * since this is ultimately rate-limited by AWS, it didn't have any performance impact over the
+ * {@link AmazonS3BinaryProvider} class. Amazon rate-limits S3 GET operations to 5,500 per second / per prefix.
  * <p>
  * (See https://docs.aws.amazon.com/AmazonS3/latest/userguide/optimizing-performance.html)
+ *
+ * TODO: Create a bucket with enough unique keys to defeat the rate limit and test performance
  */
 public class S3TransferManagerBinaryProvider implements BinaryProvider {
 

@@ -26,27 +26,11 @@ public class FakeBinaryProvider implements BinaryProvider {
     /**
      * Constructor. Creates an instance based on passed size. The size determines the "download" time
      *
-     * @param length The number of bytes for this Binary
+     * @param lengths Either a single length, or two lengths: min,max
      */
-    public FakeBinaryProvider(int length) {
-        this(length, length);
-    }
-
     public FakeBinaryProvider(List<Integer> lengths) {
         minLength = lengths.get(0);
         maxLength = lengths.size() > 1 ? lengths.get(1) : minLength;
-    }
-
-    /**
-     * Constructor. Creates an instance based on passed sizes. The size determines the "download" time
-     *
-     * @param minLength A min length. Actual instance length is randomized between this length and the
-     *                  <code>macLength</code> parameter
-     * @param maxLength Max length.
-     */
-    public FakeBinaryProvider(int minLength, int maxLength) {
-        this.minLength = minLength;
-        this.maxLength = maxLength;
     }
 
     /**
@@ -73,10 +57,5 @@ public class FakeBinaryProvider implements BinaryProvider {
             throw new RuntimeException("Thread was terminated");
         }
         return new FakeBinaryObject(key, (int) lengthActual);
-    }
-
-    @Override
-    public void shutDownNow() {
-        // NOP
     }
 }

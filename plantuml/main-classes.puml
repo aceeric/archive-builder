@@ -19,13 +19,13 @@ ArchiveCreator -- BinaryObject
 DocumentReader -- Document
 ArchiveCreator -- BinaryService
 ArchiveCreator -- Document
-BinaryService -- BinaryProvider
+BinaryService -- BinaryProvider : has >
 BinaryService -- BinaryObject
-BinaryProvider -- BinaryObject
+BinaryProvider -- BinaryObject : provides >
 Main -- ArchiveCreatorFactory
 Main -- Args
-Main -- ArchiveCreator
-ArchiveCreatorFactory -- ArchiveCreator
+Main -- ArchiveCreator : invokes >
+ArchiveCreatorFactory -- ArchiveCreator : creates >
 ArchiveCreatorFactory -- Args
 ArchiveCreatorFactory -- DocumentReader
 ArchiveCreatorFactory -- BinaryProvider

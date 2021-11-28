@@ -11,7 +11,7 @@ import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 /**
- * A simple class to tabulate some metrics
+ * A simple class to tabulate some metrics that can be displayed to the console.
  */
 public class Metrics {
 
@@ -47,7 +47,7 @@ public class Metrics {
     private double binaryBytesDownloaded;
 
     /**
-     * The amount of time spent downloading binaries across all threads - i.e. earliest download end minus
+     * The amount of time spent downloading binaries across all threads - i.e.: latest download end minus
      * earliest download start
      */
     private long downloadElapsed;

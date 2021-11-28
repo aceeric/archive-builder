@@ -166,10 +166,10 @@ class Args {
                         break;
                     case "-h":
                     case "--help":
-                        try (InputStream inputStream = ClassLoader.getSystemClassLoader().getResourceAsStream("help");
-                             InputStreamReader rdr = new InputStreamReader(inputStream);
-                             BufferedReader reader = new BufferedReader(rdr)) {
-                            reader.lines().forEach(System.out::println);
+                        try (InputStream is = ClassLoader.getSystemClassLoader().getResourceAsStream("help");
+                             InputStreamReader isrdr = new InputStreamReader(is);
+                             BufferedReader brdr = new BufferedReader(isrdr)) {
+                            brdr.lines().forEach(System.out::println);
                         }
                         return false;
                     default:

@@ -25,6 +25,7 @@ public class BinaryLoader implements Runnable {
     static final Counter outgoingQueueFull = Counter.build().name("binary_loader_outgoing_queue_full")
             .help("Count of times the binary loader blocked trying to offer binary to outgoing queue").register();
     private static final Logger logger = LogManager.getLogger(BinaryLoader.class);
+
     /**
      * Earliest start - provides most accurate representation of elapsed time for all threads, along with
      * {@link #latestFinish}
@@ -46,7 +47,6 @@ public class BinaryLoader implements Runnable {
      * Contains {@link Bin} instances into which a {@link BinaryObject} instance has been placed
      * by the class.
      */
-
     private final ReorderingQueue outgoingQueue;
 
     /**

@@ -43,9 +43,11 @@ public class Main {
 
     /**
      * The command-line allows specific classes to have their logging set to INFO for debugging purposes, so
-     * you can run the compiled JAR and turn class logging on for specific classes. In the log4j2.xml embedded
-     * in the JAR, only the <code>Main</code> class and the <code>Metrics</code> class are set to support
-     * INFO level logging.
+     * you can run the compiled JAR and turn class logging on for specific classes at run-time without having to
+     * modify or override the 'log4j2.xml' config file embedded in the JAR. In the log4j2.xml embedded in
+     * the JAR, only the <code>Main</code> class and the <code>Metrics</code> class are set to support
+     * INFO level logging. See the {@link Args} class for the command-line option to enable info logging for
+     * a specific class or classes.
      *
      * @param loggers a list of classes, like "org.ericace.Main"
      */

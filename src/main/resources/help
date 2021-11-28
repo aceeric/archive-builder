@@ -6,6 +6,9 @@ stream over an attachment to the document. The premise of the design is that doc
 Reader comes from a low latency store like ElasticSearch that is optimized for metadata storage, and
 attachment data comes from a higher latency store like S3 that is optimized for object storage.
 
+For this pattern demonstration, the Reader is a stubbed reader that provides a configurable number of
+documents with only a document name as metadata.
+
 Usage:
 
 archive-builder [OPTION]...
@@ -15,14 +18,14 @@ Primary options:
   -c, --scenario         Selects an archive builder scenario. Supported parameters are 'single' and 'multi',
                          meaning single-threaded or multi-threaded. If not specified, the single-threaded scenario
                          is executed.
-  -b, --binary-provider  Specifies the provider for document attachments. Supported values are 'fake', and 's3client'.
-                         If not specified, the fake provider is used. The fake provider provides an attachment input
-                         stream of the size specified in the --binary-size option. Its purpose is to test the utility
-                         without introducing real I/O. (To focus on threading.) The s3client provider uses the AWS
-                         SDK 'AmazonS3' class to get binaries from an S3 bucket. Additional configs are required
-                         for this as described below. The s3client provider also requires a configured
-                         ~/.aws/credentials file.
-
+  -b, --binary-provider  Specifies the provider for document attachments. Supported values are 'fake', 's3client',
+                         and 'transfermanager'. If not specified, the fake provider is used. The fake provider
+                         provides an attachment input stream of the size specified in the --binary-size option.
+                         Its purpose is to test the utility without introducing real I/O. (To focus on threading.)
+                         The s3client provider uses the AWS SDK 'AmazonS3' class to get binaries from an S3 bucket.
+                         The transfermanager provider uses the AWS 'TransferManager' class. Additional configs are
+                         required for interacting with AWS as described below. The AWS providers also require a
+                         configured ~/.aws/credentials file.
   -a, --archive          Fully-qualified path name of the TAR to generate. E.g. '/foo/bar/frobozz.tar'. This option
                          is required.
 
@@ -41,9 +44,9 @@ Optional for the 'multi' scenario:
                          to match the order provided by the Reader. If not specified, then a value of 10,000
                          is used.
 
-Required for the 's3client' binary provider:
+Required for the 's3client' and 'transfermanager' binary providers:
 
-  -u, --bucket           Specifies an S3 bucket name that you are entitled to.
+  -u, --bucket           Specifies an S3 bucket name that you are entitled to via your .credentials file
   -r, --region           Specifies a region for the S3 bucket provided in the --bucket option.
   -k, --keys             Specifies a comma-separated list of keys in the specified bucket. The utility
                          randomly selects objects from this list to download as document attachments.
@@ -54,9 +57,18 @@ Optional:
                          for the purpose of demonstrating the design. If not provided, then a value of 50,000
                          is used by the utility. The only piece of metadata returned by the stubbed document
                          reader is a document name.
-  -m, --metrics-port     Specifies the port number for Prometheus metrics. If not supplied, 1234 is used, in which
-                         case metrics are available on http://localhost:1234/metrics.
+  -m, --metrics-port     Specifies the port number for Prometheus metrics. Just a couple metrics are built
+                         into the utility to get some visibility into internals during archive generation.
+                         If not supplied, 1234 is used, in which case metrics are available on:
+                         http://localhost:1234/metrics.
   -f, --show-config      Diagnostic aid: shows how the command line was parsed and exits without doing anything.
+  -l, --loggers          Enables specification of a list of classes for which to enable INFO level logging. By
+                         default, because of the log4j2.xml file embedded in the JAR, only the 'Main' and 'Metrics'
+                         classes are configured for INFO logging. All others are ERROR logging because of the
+                         root logger. To gain more visibility into what the JAR is doing, specify a class of
+                         interest like --loggers=org.ericace.DocumentReader, and then that class will start to
+                         emanate log messages. (Logging is to the console, per the configuration file, and can
+                         be fairly voluminous.)
   -h, --help             Prints this help and exits.
 
 Examples:
@@ -64,14 +76,16 @@ Examples:
 java -jar target/archive-builder.jar --scenario=single --binary-provider=fake --document-count=50000\
   --binary-size=100,1000 --archive=/tmp/foo.tar.gz
 
-Builds foo.tar on a single thread in the user's home directory, consisting of 50 thousand documents,
-each with a fake binary attachment ranging in size from 100 bytes to 1K bytes.
+Builds foo.tar.gz on a single thread in the '/tmp' directory, consisting of 50 thousand documents, each
+with a fake binary attachment ranging in size from 100 bytes to 1K bytes. Fake attachment "download" times
+will be simulated based on size.
 
 java -jar target/archive-builder.jar --scenario=multi --binary-provider=s3client --document-count=50000\
   --threads=50 --cache-size=50000 --bucket=my-bucket --region=us-west-1 --keys=smallbin,mediumbin,bigbin\
   --archive=/tmp/foo.tar.gz
 
-Builds foo.tar on 50 threads in the user's home directory consisting of 50 thousand documents each with an
+Builds foo.tar.gz on 50 threads in the '/tmp' directory consisting of 50 thousand documents each with an
 attachment downloaded from an S3 bucket named 'my-bucket'. Objects are selected at random from the list 'smallbin',
 'mediumbin', and 'bigbin', which are all expected to exist in the bucket. An in-mem cache of size 50K items is used
-to order the binary attachments in the same order provided by the reader.
+to order the binary attachments in the same order provided by the reader. Note that, due to S3 rate-limiting,
+a max of 5K requests per second can be made for each of the three keys.

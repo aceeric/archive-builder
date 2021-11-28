@@ -15,5 +15,5 @@ public interface BinaryProvider {
     /**
      * In case the provider needs a shutdown to clean itself up
      */
-    void shutDownNow();
+    default void shutDownNow() {}
 }

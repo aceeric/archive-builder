@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- * The S3 Binary Provider class gets binaries from an S3 bucket. Since this project is basically a load and performance
+ * Gets binaries from an S3 bucket. Since this project is basically a load and performance
  * tester, the class is used as follows in the project:
  * <ol>
  *     <li>Caller initializes the class with a list of keys that are in a bucket</li>

@@ -29,7 +29,7 @@ public class AppTest
 
     @Ignore
     @Test
-    public void testS3Download() throws IOException {
+    public void testAmazonS3BinaryProvider() throws IOException {
         assertNotNull(BUCKET);
         assertNotNull(REGION);
         ArrayList<String> keys = new ArrayList<>(List.of("1000-bytes"));
@@ -43,7 +43,7 @@ public class AppTest
 
     @Ignore
     @Test
-    public void testS3TransferManagerDownload() throws IOException {
+    public void testS3TransferManagerBinaryProvider() throws IOException {
         assertNotNull(BUCKET);
         assertNotNull(REGION);
         ArrayList<String> keys = new ArrayList<>(List.of("1000-bytes"));

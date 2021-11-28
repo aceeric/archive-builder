@@ -58,6 +58,9 @@ public class SingleThreadArchiveCreator implements ArchiveCreator {
                 TarArchiveEntry entry = new TarArchiveEntry(doc.getName());
                 BinaryObject obj = binaryService.getBinary(doc.getKey());
                 entry.setSize(obj.getLength());
+                if (metrics != null) {
+                    metrics.addBinaryBytesWritten(obj.getLength());
+                }
                 entry.setModTime(Date.from(Instant.now()));
                 aos.putArchiveEntry(entry);
                 try (InputStream ois = obj.getInputStream()) {

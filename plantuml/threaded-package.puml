@@ -1,0 +1,18 @@
+@startuml
+
+class BinaryLoader
+class EnqueuingDocumentReader
+class ReorderingQueue
+class ThreadedArchiveCreator
+class BinaryService
+class TarArchiveOutputStream
+
+ThreadedArchiveCreator -- BinaryLoader : creates >
+ThreadedArchiveCreator -- ReorderingQueue : reads from >
+ThreadedArchiveCreator -- TarArchiveOutputStream : writes to >
+
+BinaryLoader -- EnqueuingDocumentReader : reads docs from >
+BinaryLoader -- ReorderingQueue : writes to >
+BinaryLoader -- BinaryService : reads binaries from >
+
+@enduml
