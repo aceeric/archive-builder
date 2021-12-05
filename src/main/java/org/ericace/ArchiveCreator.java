@@ -2,8 +2,8 @@ package org.ericace;
 
 /**
  * Defines the interface for creating a TAR. The implementation class is expected to be initialized
- * by a builder, and so instance state will contain everything needed to generate the archive. Hence this
- * is a lean API.
+ * by a builder, and so instance state will contain everything needed to generate the archive. Hence,
+ * this is a lean API.
  */
 public interface ArchiveCreator {
     /**

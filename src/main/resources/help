@@ -49,7 +49,9 @@ Required for the 's3client' and 'transfermanager' binary providers:
   -u, --bucket           Specifies an S3 bucket name that you are entitled to via your .credentials file
   -r, --region           Specifies a region for the S3 bucket provided in the --bucket option.
   -k, --keys             Specifies a comma-separated list of keys in the specified bucket. The utility
-                         randomly selects objects from this list to download as document attachments.
+                         randomly selects objects from this list to download as document attachments. If the
+                         parameter is prefixed with the 'at' sign (@) then the remainder of the value is
+                         interpreted as a filename containing keys. E.g.: --keys=@/tmp/my-key-list
 
 Optional:
 

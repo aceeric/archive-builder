@@ -13,8 +13,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Gets binaries for documents. Reads from an incoming queue containing documents but no attachments. Gets
- * a binary attachment for a document, and places the document + attachment pair on an outgoing queue.
+ * Gets binaries for documents using the instance {@link BinaryService}. Reads from an incoming queue
+ * containing documents but no attachments. Gets a binary attachment for a document, and places the
+ * document + attachment pair on an outgoing queue.
  */
 public class BinaryLoader implements Runnable {
 

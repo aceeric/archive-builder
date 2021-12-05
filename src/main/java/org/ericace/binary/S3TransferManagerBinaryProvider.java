@@ -1,5 +1,6 @@
 package org.ericace.binary;
 
+import com.amazonaws.ClientConfiguration;
 import com.amazonaws.regions.Regions;
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.AmazonS3ClientBuilder;
@@ -60,13 +61,19 @@ public class S3TransferManagerBinaryProvider implements BinaryProvider {
      *                   input stream is closed.)
      * @param keys       A list of keys from which to randomly select objects to download. (See {@link #getBinary}.)
      */
-    public S3TransferManagerBinaryProvider(int threads, String bucketName, String regionStr, String tmpDir, List<String> keys) {
+    public S3TransferManagerBinaryProvider(int threads, String bucketName, String regionStr, String tmpDir,
+                                           List<String> keys) {
         this.bucketName = bucketName;
         this.tmpDir = tmpDir;
         this.keys = keys;
 
         Regions region = Regions.fromName(regionStr);
-        AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard().withRegion(region);
+        ClientConfiguration clientConfiguration = new ClientConfiguration();
+        clientConfiguration.setMaxConnections(threads);
+        clientConfiguration.setMaxErrorRetry(10);
+
+        AmazonS3ClientBuilder builder = AmazonS3ClientBuilder.standard()
+                .withRegion(region).withClientConfiguration(clientConfiguration);
         AmazonS3 s3 = builder.build();
 
         transferManager = TransferManagerBuilder.standard()
@@ -76,19 +83,26 @@ public class S3TransferManagerBinaryProvider implements BinaryProvider {
                 .build();
     }
 
+    /**
+     * Gets a binary randomly selected from the class {@link #keys} field.
+     *
+     * @param key IGNORED
+     * @return The object from the S3 bucket.
+     */
     @Override
     public BinaryObject getBinary(String key) {
         // TODO not guaranteed to avoid collisions and transfer manager will throw on file exists
         Path tmpFile = Paths.get(tmpDir, "tmp-" + Thread.currentThread().getId() + "-" +
                 ThreadLocalRandom.current().nextLong(Long.MAX_VALUE) + ".bin").toAbsolutePath();
+        int randomKey = keys.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, keys.size());
+        String object = keys.get(randomKey);
         try {
-            int randomKey = keys.size() == 1 ? 0 : ThreadLocalRandom.current().nextInt(0, keys.size());
-            logger.info("Getting object for key {}", key);
-            Download d = transferManager.download(bucketName, keys.get(randomKey), tmpFile.toFile());
+            logger.info("Getting object for key {}", object);
+            Download d = transferManager.download(bucketName, object, tmpFile.toFile(), 1000);
             d.waitForCompletion();
         } catch (Exception e) {
-            logger.error("Could not get binary");
-            throw new RuntimeException("Could not get binary: " + key);
+            logger.error("Could not get binary: " + object + ". Cause: " + e.getMessage());
+            throw new RuntimeException("Could not get binary: " + object);
         }
         return new LocalFileBinaryObject(tmpFile);
     }

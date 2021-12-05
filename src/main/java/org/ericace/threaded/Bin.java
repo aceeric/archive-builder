@@ -4,7 +4,7 @@ import org.ericace.Document;
 import org.ericace.binary.BinaryObject;
 
 /**
- * Not "bin" as in "binary": "Bin" as in "container".
+ * "Bin" as in "container", not "bin" as in "binary".
  * <p>
  * The <code>Bin</code> class is a value class that holds: a document, a binary object, and a sequence number
  * representing the order in which said document was consumed from a {@link org.ericace.DocumentReader}.

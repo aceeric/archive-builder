@@ -16,3 +16,9 @@
 
 # compiler outputs
 **/target/**
+
+# test results
+test-results
+
+# key lists for object downloading
+*keylist

@@ -1,8 +1,11 @@
 package org.ericace;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -26,6 +29,7 @@ class Args {
     String region = null;
     boolean showConfig = false;
     List<String> keys = new ArrayList<>();
+    String keysArg = null;
     List<String> loggers = new ArrayList<>();
 
     private String parseMessage;
@@ -63,7 +67,7 @@ class Args {
         if (binaryProvider == BinaryProvider.s3client || binaryProvider == BinaryProvider.transfermanager) {
             cfg += "Bucket Name: " + bucketName + "\n" +
                     "Region: " + region + "\n" +
-                    "Keys: " + keys + "\n";
+                    "Keys: " + keysArg + "\n";
         }
         System.out.println(cfg);
     }
@@ -401,12 +405,29 @@ class Args {
      */
     private boolean parseKeys(String param) {
         if (notParseable(param)) return false;
-        keys = Arrays.asList(param.split(","));
+        keysArg = param;
+        if (param.startsWith("@")) {
+            String filename = param.substring(1);
+            Path p = Paths.get(filename);
+            if (!Files.isRegularFile(p)) {
+                parseMessage = "Keys file does not exist or is not a file: " + p.toAbsolutePath().toString();
+                return false;
+            }
+            try {
+                keys = Files.readAllLines(p);
+            } catch (IOException e) {
+                parseMessage = "Error trying to read keys file: " + p.toAbsolutePath() + ". The error was: "
+                        + e.getMessage();
+                return false;
+            }
+        } else {
+            keys = Arrays.asList(param.split(","));
+        }
         return true;
     }
 
     /**
-     * Determines if a param is parseable.
+     * Determines if a param is parseable, meaning it can't be empty, and can't start with a dash.
      *
      * @return true if parseable
      */

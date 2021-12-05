@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+#
+# Supports testing by generating lots of small files with unique prefixes to get around the
+# S3 download rate limit by prefix. Generates up to 10,0000 files in the specified bucket, with a
+# two-prefix deep key name derived from the filename.
+#
+# Usage
+#
+# ./genfiles [prefix depth] [bucket] [start] [finish]
+#
+# The 'prefix depth' and 'bucket' args are required. The prefix depth can be '1' or '2'. See examples below.
+# The bucket is the S3 bucket. The 'start' arg optional, indicating the starting filename. If not supplied
+# the script uses '0000'. The 'finish' arg is also optional. If omitted, the script uses '9999'. If
+# specified, then with 'start' defines the inclusive range of filenames to generate.
+#
+# E.g.:
+#
+# ./genfile 2 my-bucket
+#
+# Creates ten thousand 1K files in the passed bucket with keys from '00/00/0000 up to 99/99/9999. The
+# contents of each file will be the filename repeating. E.g. if filename is '2345' then content will
+# be '234523452345...'. All file names are 4 positions consisting of the number from '0000' to '9999'.
+#
+# ./genfile 1 my-bucket 44 321
+#
+# Creates objects with keys from 0047/0047 to 0321/0321 (i.e. a single-level prefix consisting
+# of the filename.)
+#
+
+depth=$1
+bucket=$2
+start=${3:-0}
+finish=${4:-9999}
+
+if [[ $finish -gt 9999 ]] || [[ $start -gt 9999 ]]; then
+  echo "Start ($start) and finish ($finish) cannot exceed 9999"
+  exit 1
+fi
+
+if [[ $finish -lt $start ]]; then
+  echo "Start ($start) must be below finish ($finish)"
+  exit 1
+fi
+
+if [[ $depth -ne 1 ]] && [[ $depth -ne 2 ]]; then
+  echo "Depth must be 1 or 2: $depth"
+  exit 1
+fi
+
+body=$(mktemp)
+
+for (( i=$start; i<=$finish; i++ )); do
+  filename=$(printf "%04d" $i)
+  content=$(printf "$filename%.0s" {1..250})
+  if [[ $depth -eq 1 ]]; then
+    key=$filename/$filename
+  else
+    key=${filename:0:2}/${filename:2}/$filename
+  fi
+  echo $key
+  printf "$content" >| $body
+  if ! aws s3api put-object --bucket $bucket --key $key --body $body &>/dev/null; then
+    echo "Error. Stopping"
+    exit 1
+  fi
+done
