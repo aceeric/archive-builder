@@ -14,10 +14,10 @@ class Main
 class Document
 class Args
 
-ArchiveCreator -- DocumentReader
+ArchiveCreator -- DocumentReader : gets documents from >
 ArchiveCreator -- BinaryObject
 DocumentReader -- Document
-ArchiveCreator -- BinaryService
+ArchiveCreator -- BinaryService : gets binaries from >
 ArchiveCreator -- Document
 BinaryService -- BinaryProvider : has >
 BinaryService -- BinaryObject

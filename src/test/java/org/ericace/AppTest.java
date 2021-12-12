@@ -4,10 +4,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.compress.utils.IOUtils;
-import org.ericace.binary.BinaryObject;
-import org.ericace.binary.AmazonS3BinaryProvider;
-import org.ericace.binary.LocalFileBinaryObject;
-import org.ericace.binary.S3TransferManagerBinaryProvider;
+import org.ericace.binary.*;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -48,6 +45,21 @@ public class AppTest
         assertNotNull(REGION);
         ArrayList<String> keys = new ArrayList<>(List.of("1000-bytes"));
         S3TransferManagerBinaryProvider p = new S3TransferManagerBinaryProvider(1, BUCKET, REGION, "/tmp", keys);
+        BinaryObject obj = p.getBinary("IGNORED");
+        System.out.println("FILE=" + ((LocalFileBinaryObject)obj).getAbsolutePath());
+        try (InputStream ois = obj.getInputStream()) {
+            IOUtils.copy(ois, System.out);
+            System.out.println("Done");
+        }
+    }
+
+    @Ignore
+    @Test
+    public void testS3AsyncBinaryProvider() throws IOException {
+        assertNotNull(BUCKET);
+        assertNotNull(REGION);
+        ArrayList<String> keys = new ArrayList<>(List.of("1000-bytes"));
+        S3AsyncBinaryProvider p = new S3AsyncBinaryProvider(50, 500, BUCKET, REGION, "/tmp", keys);
         BinaryObject obj = p.getBinary("IGNORED");
         System.out.println("FILE=" + ((LocalFileBinaryObject)obj).getAbsolutePath());
         try (InputStream ois = obj.getInputStream()) {

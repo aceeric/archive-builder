@@ -16,7 +16,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <junit.version>4.13.2</junit.version>
     <commons-compress.version>1.21</commons-compress.version>
-    <aws-java-sdk-s3.version>1.12.111</aws-java-sdk-s3.version>
+    <aws-java-sdk-s3.version>1.12.122</aws-java-sdk-s3.version>
     <maven-javadoc-plugin.version>3.1.1</maven-javadoc-plugin.version>
     <maven-clean-plugin.version>3.1.0</maven-clean-plugin.version>
     <maven-resources-plugin.version>3.0.2</maven-resources-plugin.version>
@@ -31,7 +31,22 @@
     <log4j.version>2.14.1</log4j.version>
     <simpleclient.version>0.12.0</simpleclient.version>
     <simpleclient-httpserver.version>0.12.0</simpleclient-httpserver.version>
+    <netty-nio-client.version>2.17.99</netty-nio-client.version>
+    <aws.java.sdk.version>2.17.99</aws.java.sdk.version>
+    <slf4j.version>1.7.32</slf4j.version>
   </properties>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>software.amazon.awssdk</groupId>
+        <artifactId>bom</artifactId>
+        <version>${aws.java.sdk.version}</version>
+        <type>pom</type>
+        <scope>import</scope>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <dependencies>
     <dependency>
@@ -70,6 +85,30 @@
       <artifactId>simpleclient_httpserver</artifactId>
       <version>${simpleclient-httpserver.version}</version>
     </dependency>
+    <!-- async SDK -->
+    <dependency>
+      <artifactId>netty-nio-client</artifactId>
+      <groupId>software.amazon.awssdk</groupId>
+      <version>${netty-nio-client.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>software.amazon.awssdk</groupId>
+      <artifactId>s3</artifactId>
+      <version>${aws.java.sdk.version}</version>
+    </dependency>
+    <!-- two SLF4J deps: http://www.slf4j.org/codes.html#StaticLoggerBinder -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+
+
   </dependencies>
 
   <build>

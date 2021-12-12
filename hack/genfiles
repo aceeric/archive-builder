@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 #
-# Supports testing by generating lots of small files with unique prefixes to get around the
-# S3 download rate limit by prefix. Generates up to 10,0000 files in the specified bucket, with a
-# two-prefix deep key name derived from the filename.
+# Supports testing by generating many small files with unique prefixes to get around the
+# S3 download rate limit by prefix. Generates up to 10,000 files in the specified bucket,
+# with a one- or two-deep prefix derived from the filename.
 #
 # Usage
 #
@@ -21,7 +21,7 @@
 # contents of each file will be the filename repeating. E.g. if filename is '2345' then content will
 # be '234523452345...'. All file names are 4 positions consisting of the number from '0000' to '9999'.
 #
-# ./genfile 1 my-bucket 44 321
+# ./genfile 1 my-bucket 47 321
 #
 # Creates objects with keys from 0047/0047 to 0321/0321 (i.e. a single-level prefix consisting
 # of the filename.)

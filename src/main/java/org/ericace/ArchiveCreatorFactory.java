@@ -9,7 +9,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * A factory to create {@link ArchiveCreator} instances from configuration info specified on the command line.
+ * A factory to create {@link ArchiveCreator} instances from configuration info specified on the command line. The
+ * command line configuration is encapsulated in the {@link Args} instance passed to the {@link #fromArgs(Args)}
+ * method.
  */
 public class ArchiveCreatorFactory {
     /**
@@ -34,6 +36,12 @@ public class ArchiveCreatorFactory {
                 provider = new S3TransferManagerBinaryProvider(args.threadCount, args.bucketName, args.region,
                         getOrCreateBinCachePath(), args.keys);
                 break;
+            case s3asyncclient:
+                provider = new S3AsyncBinaryProvider(args.maxConcurrency, args.maxPendingConnectionAcquires,
+                        args.bucketName, args.region, getOrCreateBinCachePath(), args.keys);
+                break;
+            default:
+                throw new RuntimeException("Un-supported binary provider: " +  args.binaryProvider);
         }
         Metrics metrics = new Metrics();
         if (args.scenario == Args.Scenario.multi) {
@@ -58,7 +66,7 @@ public class ArchiveCreatorFactory {
     /**
      * Ensures that a directory named 'binaries' exists in the system TEMP directory to hold
      * downloaded binary objects. In the design, binaries downloaded from S3 are encapsulated in a
-     * {@link LocalFileBinaryObject}, which provides an input stream reader over the object contents
+     * {@link LocalFileBinaryObject} class that provides an input stream reader over the object contents
      * that deletes the object from the file system when the stream is closed.
      *
      * @return The absolute path to the directory

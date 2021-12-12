@@ -31,6 +31,8 @@ class Args {
     List<String> keys = new ArrayList<>();
     String keysArg = null;
     List<String> loggers = new ArrayList<>();
+    int maxConcurrency = 50;
+    int maxPendingConnectionAcquires = 10_000;
 
     private String parseMessage;
 
@@ -64,8 +66,11 @@ class Args {
         if (binaryProvider == BinaryProvider.fake) {
             cfg += "Binary Sizes: " + binarySizes + "\n";
         }
-        if (binaryProvider == BinaryProvider.s3client || binaryProvider == BinaryProvider.transfermanager) {
-            cfg += "Bucket Name: " + bucketName + "\n" +
+        if (binaryProvider == BinaryProvider.s3client || binaryProvider == BinaryProvider.transfermanager
+                || binaryProvider == BinaryProvider.s3asyncclient) {
+            cfg += "Max Concurrency: " + maxConcurrency + "\n" +
+                    "Max Pending Connection Acquires: " + maxPendingConnectionAcquires + "\n" +
+                    "Bucket Name: " + bucketName + "\n" +
                     "Region: " + region + "\n" +
                     "Keys: " + keysArg + "\n";
         }
@@ -164,6 +169,18 @@ class Args {
                             parsedOk = false;
                         }
                         break;
+                    case "-y":
+                    case "--max-concurrency":
+                        if (!parseMaxConcurrency(argQueue.poll())) {
+                            parsedOk = false;
+                        }
+                        break;
+                    case "-p":
+                    case "--max-pend-acquires":
+                        if (!parseMaxPendingConnectionAcquires(argQueue.poll())) {
+                            parsedOk = false;
+                        }
+                        break;
                     case "-f":
                     case "--show-config":
                         showConfig = true;
@@ -224,9 +241,10 @@ class Args {
             parseMessage = "Missing required FQPN of TAR file to create";
             return false;
         }
-        if (binaryProvider == BinaryProvider.s3client || binaryProvider == BinaryProvider.transfermanager) {
+        if (binaryProvider == BinaryProvider.s3client || binaryProvider == BinaryProvider.transfermanager
+                || binaryProvider == BinaryProvider.s3asyncclient) {
             if (region == null || bucketName == null || keys.size() == 0) {
-                parseMessage = "The s3client and transfer manager binary providers requires all three of: bucket, region, and keys";
+                parseMessage = "The s3 binary providers require all three of: bucket, region, and keys";
                 return false;
             }
         } else if (region != null || bucketName != null || keys.size() != 0) {
@@ -242,6 +260,7 @@ class Args {
 
     /**
      * Parses the --scenario opt
+     *
      * @return true if ok
      */
     private boolean parseScenario(String param) {
@@ -257,12 +276,13 @@ class Args {
 
     /**
      * Parses the --binary-provider opt
+     *
      * @return true if ok
      */
     private boolean parseBinaryProvider(String param) {
         if (notParseable(param)) return false;
         List<String> binaryProviders = Arrays.asList(BinaryProvider.fake.name(), BinaryProvider.s3client.name(),
-                BinaryProvider.transfermanager.name());
+                BinaryProvider.transfermanager.name(), BinaryProvider.s3asyncclient.name());
         if (!binaryProviders.contains(param)) {
             parseMessage = "Unknown binary provider: " + param;
             return false;
@@ -273,6 +293,7 @@ class Args {
 
     /**
      * Parses the --document-count opt
+     *
      * @return true if ok
      */
     private boolean parseDocumentCount(String param) {
@@ -287,6 +308,7 @@ class Args {
 
     /**
      * Parses the --metrics-port opt
+     *
      * @return true if ok
      */
     private boolean parseMetricsPort(String param) {
@@ -301,6 +323,7 @@ class Args {
 
     /**
      * Parses the --binary-size opt
+     *
      * @return true if ok
      */
     private boolean parseBinarySizes(String param) {
@@ -322,6 +345,7 @@ class Args {
 
     /**
      * Parses the --cache-size opt
+     *
      * @return true if ok
      */
     private boolean parseCacheSize(String param) {
@@ -336,6 +360,7 @@ class Args {
 
     /**
      * Parses the --threads opt
+     *
      * @return true if ok
      */
     private boolean parseThreadCount(String param) {
@@ -350,6 +375,7 @@ class Args {
 
     /**
      * Parses the --archive opt
+     *
      * @return true if ok
      */
     private boolean parseArchiveFqpn(String param) {
@@ -371,6 +397,7 @@ class Args {
 
     /**
      * Parses the --bucket opt
+     *
      * @return true if ok
      */
     private boolean parseBucketName(String param) {
@@ -380,7 +407,30 @@ class Args {
     }
 
     /**
+     * Parses --max-concurrency
+     *
+     * @return true if ok
+     */
+    private boolean parseMaxConcurrency(String param) {
+        if (notParseable(param)) return false;
+        maxConcurrency = safeParseInt(param);
+        return true;
+    }
+
+    /**
+     * Parses --max-pend-acquires
+     *
+     * @return true if ok
+     */
+    private boolean parseMaxPendingConnectionAcquires(String param) {
+        if (notParseable(param)) return false;
+        maxPendingConnectionAcquires = safeParseInt(param);
+        return true;
+    }
+
+    /**
      * Parses the --region opt
+     *
      * @return true if ok
      */
     private boolean parseRegion(String param) {
@@ -391,6 +441,7 @@ class Args {
 
     /**
      * Parses the --loggers opt
+     *
      * @return true if ok
      */
     private boolean parseLoggers(String param) {
@@ -401,6 +452,7 @@ class Args {
 
     /**
      * Parses the --keys opt
+     *
      * @return true if ok
      */
     private boolean parseKeys(String param) {
@@ -461,8 +513,8 @@ class Args {
     enum Scenario {single, multi}
 
     /**
-     * Defines the binary providers - fake, s3client, or transfer manager
+     * Defines the binary providers - fake, s3client, transfer manager, s3 async client
      */
-    enum BinaryProvider {fake, s3client, transfermanager}
+    enum BinaryProvider {fake, s3client, transfermanager, s3asyncclient}
 
 }

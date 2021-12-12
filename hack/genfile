@@ -13,7 +13,7 @@
 # ./genfile 100000-bytes 100000
 #
 # Results in a file named '100000-bytes' filled with content "100000 bytes 100000 bytes 100000 bytes..." having
-# size is exactly 100,000 bytes.
+# size exactly 100,000 bytes.
 #
 
 filename=$1
