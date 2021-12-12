@@ -1,7 +1,3 @@
-#./src/main/java/org/ericace/threaded/Bin.java
-#./src/main/java/org/ericace/threaded/EnqueuingDocumentReader.java
-#./src/main/java/org/ericace/threaded/ReorderingQueue.java
-#./src/main/java/org/ericace/threaded/BinaryLoader.java
 @startuml
 
 interface ArchiveCreator
